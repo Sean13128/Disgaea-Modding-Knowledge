@@ -1,0 +1,16 @@
+# Folder layout: names and sizes only. Folder totals are for the scanned copy
+# (mod files and backups were filtered out of the listing, not out of the totals).
+Disgaea 6 Complete/  (12 files, 6GB)
+  data/  (7 files, 6GB)
+    bgm.dat  90MB
+    data.dat  3GB
+    model.dat  1GB
+    msg.dat  628MB
+    script.dat  3MB
+    se.dat  11MB
+    voice.dat  435MB
+  Disgaea 6 Complete - Digital Art Book.pdf  91MB
+  Disgaea6.exe  13MB
+  lz4.dll  110KB
+  steam_api64.dll  284KB
+  xaudio2_9redist.dll  946KB

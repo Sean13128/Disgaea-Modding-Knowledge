@@ -1,0 +1,27 @@
+# Folder layout: names and sizes only. Folder totals are for the scanned copy
+# (mod files and backups were filtered out of the listing, not out of the totals).
+Disgaea 2 PC/  (27 files, 1GB)
+  disgaea2app.app/  (10 files, 6MB)
+    Contents/  (9 files, 6MB)
+      MacOS/  (2 files, 5MB)
+      Resources/  (2 files, 1MB)
+      Info.plist  837B
+    installscript_osx.vdf  136B
+  SAVEDATA/  (1 files, 51B)
+    steam_autocloud.vdf  51B
+  DATA.DAT  628MB
+  Disgaea2PC_ArtBook_1212.pdf  88MB
+  libalut.0.dylib  46KB
+  libogg.0.dylib  63KB
+  libsdkencryptedappticket.dylib  2MB
+  libsteam_api.dylib  796KB
+  libtheora.0.dylib  234KB
+  libtheoradec.1.dylib  75KB
+  libtheoraenc.1.dylib  199KB
+  libvorbis.0.dylib  197KB
+  libvorbisenc.2.dylib  767KB
+  libvorbisfile.3.dylib  38KB
+  mov00.ogm  88MB
+  mov01.ogm  64MB
+  Steam_appid.txt  6B
+  SUB_DATA.DAT  511MB

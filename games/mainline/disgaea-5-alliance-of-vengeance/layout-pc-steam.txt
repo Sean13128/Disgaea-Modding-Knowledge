@@ -1,0 +1,53 @@
+# Folder layout: names and sizes only. Folder totals are for the scanned copy
+# (mod files and backups were filtered out of the listing, not out of the totals).
+Data/  (33 files, 10GB)
+  Anime/  (5 files, 5GB)
+    ANM_HI_CH.dat  467MB
+    ANM_HI_EN.dat  760MB
+    ANM_HI_FR.dat  515MB
+    ANM_HI_HN.dat  422MB
+    ANM_HI_JP.dat  3GB
+  Database/  (1 files, 28MB)
+    Database_0.dat  28MB
+  Map/  (5 files, 1003MB)
+    Map_CH.dat  94MB
+    Map_EN.dat  52MB
+    Map_FR.dat  72MB
+    Map_HN.dat  94MB
+    Map_JP.dat  692MB
+  Movie/  (4 files, 500MB)
+    dis5_ch.wmv  124MB
+    dis5_en.wmv  127MB
+    dis5_hn.wmv  124MB
+    dis5_ja.wmv  124MB
+  Object/  (5 files, 171MB)
+    Object_CH.dat  2MB
+    Object_EN.dat  2MB
+    Object_FR.dat  6MB
+    Object_HN.dat  3MB
+    Object_JP.dat  159MB
+  Script/  (2 files, 17MB)
+    script.dat  10MB
+    talk.dat  6MB
+  Skit/  (1 files, 46MB)
+    Skit_0.dat  46MB
+  Sound_BGM/  (2 files, 216MB)
+    Sound_BGM_0.dat  213MB
+    Sound_BGM_1.dat  3MB
+  Sound_Msg/  (1 files, 1GB)
+    Sound_Msg_0.dat  1GB
+  Sound_SE/  (1 files, 17MB)
+    Sound_SE_0.dat  17MB
+  Sound_Voice/  (1 files, 1GB)
+    Sound_Voice_0.dat  1GB
+  Start/  (5 files, 285MB)
+    Start_CH.dat  12MB
+    Start_EN.dat  12MB
+    Start_FR.dat  11MB
+    Start_HN.dat  12MB
+    Start_JP.dat  238MB
+d3dcompiler_47.dll  4MB
+disgaea5.exe  14MB
+Disgaea_5_Complete_Art_Book.pdf  29MB
+lisence.txt  5KB
+steam_api64.dll  245KB

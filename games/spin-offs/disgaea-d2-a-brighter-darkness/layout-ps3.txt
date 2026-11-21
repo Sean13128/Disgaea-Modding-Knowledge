@@ -1,0 +1,32 @@
+# Folder layout: names and sizes only. Folder totals are for the scanned copy
+# (mod files and backups were filtered out of the listing, not out of the totals).
+disc/  (261 files, 2GB)
+  Disgaea D2 A Brighter Darkness - [BLUS31313]/  (261 files, 2GB)
+    PS3_GAME/  (259 files, 2GB)
+      USRDIR/  (252 files, 2GB)
+      ICON0.PNG  60KB
+      PARAM.SFO  1KB
+      PIC1.PNG  1MB
+      PS3LOGO.DAT  5KB
+      SND0.AT3  2MB
+    PS3_UPDATE/  (1 files, 256MB)
+    PS3_DISC.SFB  2KB
+dlc/  (50 files, 2MB)
+  extracted/  (49 files, 1MB)
+    USRDIR/  (45 files, 14KB)
+      Data/  (45 files, 14KB)
+    ICON0.PNG  48KB
+    PARAM.SFO  460B
+    PIC1.PNG  1MB
+    PS3LOGO.DAT  5KB
+update 1.40/  (34 files, 130MB)
+  extracted/  (33 files, 65MB)
+    USRDIR/  (27 files, 62MB)
+      Data/  (26 files, 57MB)
+      EBOOT.BIN  5MB
+    ICON0.PNG  60KB
+    PARAM.HIP  639B
+    PARAM.SFO  532B
+    PIC1.PNG  1MB
+    PS3LOGO.DAT  5KB
+    SND0.AT3  2MB

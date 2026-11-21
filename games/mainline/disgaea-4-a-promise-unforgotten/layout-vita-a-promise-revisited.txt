@@ -1,0 +1,31 @@
+# Folder layout: names and sizes only. Folder totals are for the scanned copy
+# (mod files and backups were filtered out of the listing, not out of the totals).
+app/  (96 files, 3GB)
+  PCSE00360/  (96 files, 3GB)
+    Data/  (62 files, 3GB)
+      DATA_EN/  (9 files, 1GB)
+      savedata/  (41 files, 1MB)
+      SOUND/  (2 files, 379MB)
+      SOUND_EN/  (2 files, 362MB)
+      SOUND_JP/  (2 files, 458MB)
+      ITEMSYMBOL.dat  5MB
+      LOGO.dat  361KB
+      MAP.dat  551MB
+      MAPDATA.dat  6MB
+      OBJ.dat  45MB
+      screenshot.png  18KB
+    sce_module/  (5 files, 2MB)
+      libc.suprx  198KB
+      libface.suprx  71KB
+      libfios2.suprx  113KB
+      libsmart.suprx  1MB
+      libult.suprx  49KB
+    sce_sys/  (28 files, 24MB)
+      about/  (1 files, 15KB)
+      livearea/  (3 files, 186KB)
+      manual/  (18 files, 18MB)
+      trophy/  (1 files, 5MB)
+      icon0.png  9KB
+      param.sfo  2KB
+      pic0.png  134KB
+    eboot.bin  2MB

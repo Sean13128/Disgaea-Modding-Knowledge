@@ -1,0 +1,18 @@
+# SHA-256 of the stock files of the Steam release (app 2250600). The scanned copy had mods installed:
+# mod-loader, mod and log files, crash dumps, data.dat, lz4.dll and launch*.bat are left out because they
+# could not be confirmed as stock.
+cc6c9efec5ee37847a354f3c9b1d68e4fe124e6deece4c03f1a05dd461cb40bc  Disgaea 7 Vows of the Virtueless/Disgaea 7 Vows of the Virtueless - Mini Art Book.pdf
+9c4bbf90a94c7b762da382583e8a1f6d4726fa753634cfbe55782814f1b8d6a4  Disgaea 7 Vows of the Virtueless/Disgaea 7 Vows of the Virtueless - The Art of War Art Book.pdf
+116705949427cf665f1af1b93b2e6b881e96099906bbcb4e75051853a93dfa94  Disgaea 7 Vows of the Virtueless/Disgaea7.exe
+c7c94deb154fd82f4237c217d4bcd5118bebd61ae0d57ceae6b9d82045bc797f  Disgaea 7 Vows of the Virtueless/NmplDLL.dll
+aea5b44253f5a5030949d16d9c34c3e335458fe96f1313cdb557748e698c0d46  Disgaea 7 Vows of the Virtueless/NmplDLLMemoryInterface.dll
+31584127c720ed9b553cb842abe9684de2d5040d6d64469ad1bfe19e4aeb63e1  Disgaea 7 Vows of the Virtueless/data/bgm_1_00.dat
+8fa4d904cf5db1af92a4cf0cdb0bba9fce256e072993394895c116c936426a0d  Disgaea 7 Vows of the Virtueless/data/map_1_00.dat
+9075d40e21e3ad16eb16c016a78e7029810ccc4346a5f34f2e648c7059a512b7  Disgaea 7 Vows of the Virtueless/data/misc_1_00.dat
+7f060447f08851de096393023b1316859455f4cb1557e74c589a2f84d428cabb  Disgaea 7 Vows of the Virtueless/data/model_1_00.dat
+247f70b05ddb14816ad0c8599b8d4e495de48659c96ad038582e825126ea8dad  Disgaea 7 Vows of the Virtueless/data/msg_1_00.dat
+84edc6a672d2277e08a21053238546d9c8b24df4cf3a46e4f519f0240a93dfa5  Disgaea 7 Vows of the Virtueless/data/se_1_00.dat
+98e93eb3f2a7cb9a30144ebd4437db179cf24a11c4f2ed8db7608e7b4e624ef2  Disgaea 7 Vows of the Virtueless/data/shader_1_00.dat
+8d38106e6336c7a7783d412a4dca1a605efda95294819a768ba0adf13181429c  Disgaea 7 Vows of the Virtueless/data/texture_1_00.dat
+75af8d5fa0b78c53f9648274f07269e82c7c3f0a53ed99f06cdcf54da508600e  Disgaea 7 Vows of the Virtueless/data/voice_1_00.dat
+1db3fd414039d3e5815a5721925dd2e0a3a9f2549603c6cab7c49b84966a1af3  Disgaea 7 Vows of the Virtueless/steam_api64.dll

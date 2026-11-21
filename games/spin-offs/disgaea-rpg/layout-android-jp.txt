@@ -1,0 +1,11 @@
+# Folder layout: names and sizes only. Folder totals are for the scanned copy
+# (mod files and backups were filtered out of the listing, not out of the totals).
+apk/  (4 files, 257MB)
+  base.apk  137MB
+  split_config.arm64_v8a.apk  120MB
+  split_config.en.apk  40KB
+  split_config.xxhdpi.apk  69KB
+sdcard/  (55494 files, 10GB)
+  Android/  (55494 files, 10GB)
+    data/  (55494 files, 10GB)
+      com.disgaearpg.forwardworks/  (55494 files, 10GB)

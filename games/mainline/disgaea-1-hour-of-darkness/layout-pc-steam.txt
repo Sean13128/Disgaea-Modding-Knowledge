@@ -1,0 +1,14 @@
+# Folder layout: names and sizes only. Folder totals are for the scanned copy
+# (mod files and backups were filtered out of the listing, not out of the totals).
+Disgaea PC/  (10 files, 2GB)
+  SAVEDATA/  (1 files, 51B)
+    steam_autocloud.vdf  51B
+  alut.dll  32KB
+  DATA.DAT  2GB
+  dis1_st.exe  2MB
+  DISGAEA_PC_Digital_Art_Book.pdf  60MB
+  sdkencryptedappticket.dll  516KB
+  steam_api.dll  212KB
+  steam_appid.txt  6B
+  SUBDATA.DAT  49MB
+  version.txt  0B

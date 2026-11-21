@@ -1,0 +1,11 @@
+# Folder layout: names and sizes only. Folder totals are for the scanned copy
+# (mod files and backups were filtered out of the listing, not out of the totals).
+romfs/  (7 files, 3GB)
+  data/  (6 files, 3GB)
+    DATA.DAT  1GB
+    font.bin  16MB
+    script.dat  885KB
+    script_fr.dat  909KB
+    SUBDATA.DAT  925MB
+    SUBDATA_FR.DAT  923MB
+  font.bin  16MB

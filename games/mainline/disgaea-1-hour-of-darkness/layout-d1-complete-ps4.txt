@@ -1,0 +1,30 @@
+# Folder layout: names and sizes only. Folder totals are for the scanned copy
+# (mod files and backups were filtered out of the listing, not out of the totals).
+EP1063-CUSA13171_00-DISGAEA1HDPS4000/  (38 files, 3GB)
+  data/  (7 files, 3GB)
+    DATA.DAT  2GB
+    font.bin  16MB
+    SaveIcon.dat  276KB
+    script.dat  885KB
+    script_fr.dat  909KB
+    SUBDATA.DAT  928MB
+    SUBDATA_FR.DAT  926MB
+  sce_module/  (2 files, 2MB)
+    libc.prx  1MB
+    libSceFios2.prx  439KB
+  sce_sys/  (27 files, 8MB)
+    about/  (1 files, 16KB)
+      right.sprx  16KB
+    trophy/  (1 files, 2MB)
+      trophy00.trp  2MB
+    entry_names  193B
+    icon0.dds  128KB
+    icon0.png  93KB
+    param.sfo  2KB
+    pic0.dds  1013KB
+    pic0.png  1MB
+    pic1.dds  1013KB
+    pic1.png  1MB
+    shareparam.json  178B
+  eboot.bin  3MB
+  sce_discmap.plt  3MB

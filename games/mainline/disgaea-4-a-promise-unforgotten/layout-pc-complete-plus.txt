@@ -1,0 +1,52 @@
+# Folder layout: names and sizes only. Folder totals are for the scanned copy
+# (mod files and backups were filtered out of the listing, not out of the totals).
+Disgaea 4 Complete+/  (82 files, 6GB)
+  Data/  (75 files, 6GB)
+    DATA/  (57 files, 5GB)
+      CN/  (8 files, 534MB)
+      EN/  (7 files, 526MB)
+      FR/  (6 files, 439MB)
+      JP/  (5 files, 218MB)
+      KO/  (8 files, 543MB)
+      TW/  (8 files, 541MB)
+      anm0.fad  41MB
+      ANM_HI.dat  1GB
+      FONT.dat  12MB
+      ITEMSYMBOL.dat  5MB
+      LOGO.dat  103KB
+      MAP.dat  531MB
+      MAPDATA.dat  6MB
+      NISANMSHADOW.dat  4KB
+      NOWLOADING.dat  10KB
+      OBJ.dat  45MB
+      SHIPPARTS.dat  36MB
+      START.dat  26MB
+      StuffedRoll.dat  2MB
+      TEXTURE.dat  23MB
+      WF.dat  15MB
+    SAVEDATA/  (5 files, 9MB)
+      cn/  (1 files, 871KB)
+      en/  (1 files, 2MB)
+      jp/  (1 files, 2MB)
+      ko/  (1 files, 2MB)
+      tw/  (1 files, 2MB)
+    SOUND/  (12 files, 2GB)
+      EN/  (2 files, 520MB)
+      JP/  (2 files, 628MB)
+      bgm.dat  390MB
+      se.dat  6MB
+      SoundData_BGM.dat  7KB
+      SoundData_Msg_EN.dat  312KB
+      SoundData_Msg_JP.dat  357KB
+      SoundData_SE.dat  12KB
+      SoundData_Voice_EN.dat  153KB
+      SoundData_Voice_JP.dat  153KB
+    font.bin  16MB
+  DLC/  (1 files, 109MB)
+    Disgaea 4 Complete+ Digital Art Book.pdf  109MB
+  Disgaea4pc.exe  8MB
+  libcrypto-1_1-x64.dll  3MB
+  libcurl.dll  415KB
+  libssl-1_1-x64.dll  666KB
+  license.txt  30KB
+  steam_api64.dll  284KB

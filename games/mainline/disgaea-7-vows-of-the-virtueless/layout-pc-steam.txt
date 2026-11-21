@@ -1,0 +1,20 @@
+# Folder layout: names and sizes only. Folder totals are for the scanned copy
+# (mod files and backups were filtered out of the listing, not out of the totals; data.dat may be mod-generated).
+Disgaea 7 Vows of the Virtueless/  (31 files, 10GB)
+  data/  (9 files, 8GB)
+    bgm_1_00.dat  192MB
+    map_1_00.dat  11MB
+    misc_1_00.dat  20MB
+    model_1_00.dat  4GB
+    msg_1_00.dat  1GB
+    se_1_00.dat  19MB
+    shader_1_00.dat  99KB
+    texture_1_00.dat  1GB
+    voice_1_00.dat  838MB
+  data.dat  2GB
+  Disgaea 7 Vows of the Virtueless - Mini Art Book.pdf  8MB
+  Disgaea 7 Vows of the Virtueless - The Art of War Art Book.pdf  22MB
+  Disgaea7.exe  17MB
+  NmplDLL.dll  6MB
+  NmplDLLMemoryInterface.dll  54KB
+  steam_api64.dll  291KB
