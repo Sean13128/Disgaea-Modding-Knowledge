@@ -6,6 +6,38 @@ mods and community tools do it.
 
 > **Status:** first drafts. Every game with research on hand has a page set; see [STATUS.md](STATUS.md).
 
+## Special thanks
+
+This wiki stands on the work of the Disgaea modding community. Thank you to:
+
+- **Cryswar** (Aryuto on Reddit): Overlord Edition for Disgaea 5 and Disgaea 7
+- **eraser4521**: D5 Mod Kit
+- **HybridEidolon** (Eidolon): Makai Kit, the Disgaea 6 and 7 mod loader
+- **ninakoru**: Disgaea Unleashed
+- **iHaku**: Classic Disgaea 5 Enhanced
+- **Sorrow**: Disgaea 5 engine research
+- **ProgSys**: pg_disatools
+- **xdanieldzd**: Scarlet, NisAnim and Artina
+- **Darkmet98**: Pleinair and the Disgaea 4 `.DAT` tools, with scripts by **Raugo** and **Luigi Auriemma**
+- **HenryEx**: the Disgaea PC and Disgaea 2 PC save script
+- **Xkeeper0**: disgaea-pc-tools
+- **Kaldaien**: Pretty Prinny
+- **Maide**: the Disgaea PC executable patch behind the HD sprite mod
+- **Liminori**: higher-resolution image tests for Disgaea PC
+- **BTAxis**: D5tools
+- **Grid487**: disgaea5autoplay
+- **Lyall**: Disgaea5Fix
+- **FireyFly**: Disgaea DS format notes
+- **NitroShellMKDS**: Disgaea-DS-Manager
+- **lmc**: the Disgaea 2 save editor
+- **twelvehouse**: makaikit-vits
+- **JellyfishCraft86**: Disgaea-7-Trainer
+- **LUUKASR1**: the Windows build of the Disgaea D2 port
+- **triforce-heroes**: triforce-disgaea for Disgaea Mayhem
+- The **Death's Requiem** Discord, and everyone who writes for the Disgaea Wiki and the r/Disgaea Netherwiki
+
+Links to each project are in the [tools](tools/README.md) and [mods](mods/README.md) catalogs.
+
 ## Find a game
 
 ### Mainline
