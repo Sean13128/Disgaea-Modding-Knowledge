@@ -102,8 +102,14 @@ Entry, little-endian:
 The decompressed data is **1,024 bytes of RGBA palette** (alpha 255 throughout) followed by **65,536 linear 8-bit
 indices**. Every face is a full 256 × 256 head-and-shoulders frame on opaque white (262 of 268 have a white corner pixel).
 The face for a character is looked up by `swf%04d` of the character row's sprite ID plus its palette (**From decomp**,
-Switch v0), with four exceptions in the key. This is the set that matches D1 Complete's redrawn battle bodies; the older
+Switch v0), with four exceptions in the key (the key function was run in an emulator over the character table and matches the rule, **Verified offline**, 2026-11-24). This is the set that matches D1 Complete's redrawn battle bodies; the older
 `start.dat` member 73 is a PC-era set (see [portraits and faces](portraits-and-faces.md)).
+
+**Header and index (2026-11-24, Verified offline / Unknown).** The first four 32-bit words of the Switch `anmdat.fad` read `0x66`,
+`0x02`, `0x1E` and `0x168`; the first is not the `0x6A` version word of the Disgaea 6 and 7 format above, so the two files
+should not be assumed to share a header. How the game's loader indexes the entries (it requests them by name under the
+texture group `"wf"`) was not traced, and the readers used here find entries by scanning for the `swf####` names, so the
+directory layout is **Unknown**.
 
 ## Tools
 

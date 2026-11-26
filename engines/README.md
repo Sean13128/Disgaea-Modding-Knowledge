@@ -23,7 +23,7 @@ Low numbers for D1 Complete are partly because it's ARM64 and D5 is x64. Its dat
 |---|---|---|
 | **Classic** | Disgaea 1 (PS2/PSP/PC), Disgaea 2 | IMY-compressed archives, TX2/TXP textures, sprite sheets; XOR + `YKCMP_V1` saves on PC. Disgaea 2 PC (2017) also uses D5 PC's database framework (same table type names), even though its code matches D5 poorly |
 | **D3 / D4** | Disgaea 3, Disgaea 4, Disgaea D2 | D4 was built from D3's code (`dis3_0.dat` is still there; D2 ships one too). anm sprites with 16-byte node rows. D2 also uses D5-style NISPACK archives, so it sits between the D4 and D5 families |
-| **D5** | Disgaea 5, Disgaea 1 Complete (data) | anm sprites with 20-byte node rows; NISPACK archives; D1 Complete's HD sprites are D5 files and its monsters use D5 action IDs |
+| **D5** | Disgaea 5, Disgaea 1 Complete (data) | anm sprites with 20-byte node rows; NISPACK archives; D1 Complete's HD sprites are D5 files and its monsters use D5 action IDs. Its HD humanoids go further: they play D5's own shared motion set (**Verified offline**, [anm](../formats/anm.md)). Motion ids are still not a shared vocabulary across families ([motion ids](../formats/motion-names.md)) |
 | **3D** | Disgaea 6, Disgaea 7 | 3D models, Lua scripts, data-driven effects (confirmed for D7), Makai Kit loader; D6 characters port to D7 |
 
 Across all of them: the skill event scheme `12,000,000 + skill ID` (seen in D4 and D5), kind/gender codes, and similar

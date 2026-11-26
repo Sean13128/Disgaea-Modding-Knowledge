@@ -13,6 +13,7 @@ Formats that appear in more than one NIS game. Each page lists which games use i
 | [Disgaea PC containers](disgaea-pc-containers.md) | PSPFS, OLA/COLA/SOLA, IMY, KM3, MPP, MPD, GEO, SH, TX2 | Disgaea PC (SH2 variant in Disgaea 2 PC) |
 | [NIS LZS](nis-lzs.md) | Compression | Disgaea 4, 5, D2, 1 Complete (sprites, maps) |
 | [anm](anm.md) | 2D sprite animation | Disgaea 4, 5, D2, 1 Complete |
+| [Motion ids and what they mean](motion-names.md) | Animation ids across games | Disgaea 5, 4, D2, 1 Complete (names only in Disgaea RPG) |
 | [Textures: TXF, TX2, TXP, NLTX, NMT](textures.md) | Images | Most games |
 | [FAD, FANM](fad.md) | 2D illustration and animation containers | Disgaea 6, 7 |
 | [OBF](obf.md) | 3D objects and effects | Disgaea 4, 5 |

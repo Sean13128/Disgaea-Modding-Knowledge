@@ -18,9 +18,10 @@ needs are mapped so far.
 | `magic.dat` | 356 | Skills and spells |
 | `charhelp.dat` | 386 | Descriptions: `u16 id` + three 128-byte lines |
 | `charPersonal.dat` | 70 | Generic-class personalities |
+| `mitem.dat` | 244 | Items (796 rows); weapon type and model fields mapped ([below](#mitemdat--items-weapon-fields-only-2026-11)) |
 | `MinistryMap.dat` | 186 (`0xBA`) | The Cabinet (Netherworld ministry posts): 14 rows; row ID at `+0`, an event word at `+0x22`, the **evility the post grants** at `+0xB2` (row 0, Netherworld President, grants 500 Level Spurt) |
 
-Row counts in the EN database: `char.dat` 957, `mskill.dat` 1,230, `MinistryMap.dat` 14. The archive has **73 members**; the others aren't documented yet. None is obviously a stat-growth table, so
+Row counts in the EN database: `char.dat` 957, `mitem.dat` 796, `mskill.dat` 1,230, `MinistryMap.dat` 14. The archive has **73 members**; the others aren't documented yet. None is obviously a stat-growth table, so
 where D4 keeps growth rules is **Unknown**.
 
 Complete+ values can differ from earlier editions (e.g. the Masked Hero's ATK/HIT aptitudes are 90/90 in Complete+,
@@ -79,9 +80,28 @@ weapon mastery values and no weapon-type resistances, and evilities learnable pe
 here), `magichange` `+0x1B8`, `kind_gender` `+0x292` (values of 10 and above occur, such as 21; D5 uses the value
 mod 10; 13 with sprite 9000 marks story-only forms with no body, rows 930–980), `body_type` `+0x298` (0 humanoid,
 1 monster, independent of `kind_gender`). A look is a body (`sprite`) plus a colour bank: **the bank is
-`color_id % 10`**, so recolours are rows that reuse a body with another colour ID, and faces are keyed by colour ID.
+`color_id % 10`**, so recolours are rows that reuse a body with another colour ID. (**Corrected 2026-11-25:** an earlier version added "and faces are keyed by colour ID". Cut-ins are per colour byte, but the face is the class face for every rank and NPC row; only IDs below 1000 with their own face, such as Des X and Nemo, use the colour ID. See [assets.md](assets.md#faces-and-cut-ins-which-picture-a-character-gets-2026-11-offline).)
 A class is six rows (rank 0–5) with the same sprite and colour. There are 45 class families (25 humanoid, 20 monster).
 Monster bodies carry 62–83 motions of their own; humanoid bodies 3–11, with the shared block supplying the rest.
+
+**Fields the engine reads for sprites, palettes and effects (2026-11-24, Verified offline unless marked).** The table is a `u32`
+count (957) then rows of `0x2AC` bytes; its non-text bytes are identical in the EN, JP, FR and KO databases, so the database
+language changes no sprite or voice identity. A unit stores its row index at unit `+0x28C` and a body-kind word at `+0x28E`
+(0 and 1 both read the character table; 2 means no animation owner). Rank rows of a class are IDs `first..first+5` with the
+same sprite and `color_id = sprite + rank`; `tier` (`+0x294`) equals `color_id - sprite` in all 134 in-scope rows. Eleven uniques
+(Des X, Nemo, Kojiro, Chief, Tromayer, Baltis, Garatea, Arsailles, Graceus, Reprachon, Psylos) have a sprite different from
+their ID and share a class body. The byte block at `+0x286` is seven identical bytes per row (0 or 5), which reads as a
+weapon-user flag rather than a mastery (**reading**, not code-traced).
+
+**Reward, mana and size fields against D5 (2026-11-23, From decomp + Verified offline).** The two games hold the same
+quantity in these fields, with different amounts:
+
+| D4 field | D4 function | D5 counterpart | How alike |
+|---|---|---|---|
+| `+0x1B2` mana_value | `0x1400F6210` | `0x140147870` (unit `+0xF0`) | Same formula (level × value / 100, 5 to 999, 10 when the flag is off); equal values in 203 of 222 same-name rank rows |
+| `+0x1B0` rank_bonus | `0x140276A30` | `0x1404722F0` | Both compute table[index] × value / 10; equal in 186 of 222. What the product scales in D5 is not identified |
+| `+0x1AA` / `+0x1AC` HL / EXP | `0x1400E67A0` / `0x1400F9750` | `0x140147290` / `0x140147F40` | Same role, different level formulas; D5 re-balanced 157 (HL) and 183 (EXP) of 222 |
+| `+0x19A` height | row to unit `+0x364` (float) | row `+216` to unit `+0x70` (float) | Same quantity, another scale: the same character is 17 in D4 and 14 in D5 in 139 of 222 rows. D4 holds only 12, 17 and 20, so it has no per-character height; there is no single conversion rule |
 
 **Weapon forte, 2026-11 (Verified offline).** The hundreds digit of a `weapon_skills` entry (code − 10000 = `magic.dat`
 ID) names the weapon family: 1xx fist, 2xx sword, 3xx spear, 4xx bow, 5xx gun, 6xx axe, 7xx attack magic and 8xx
@@ -99,6 +119,17 @@ Task Force Member (5300), Alien (5303) and Senator Kijit (4400) use the Armor Kn
 (1200) and Wood Golem (2160) bodies; Aiko, Gracie, Erika, Duke, Sleepytime and the Office Worker (4310, 4340, 4330,
 4350, 4320, 5302) use bodies 1060, 1010, 1040, 1070, 1100, 1100; Zommie V (3307) uses body 2080. Senators 4370 and 4380
 (bodies 1180, 1120) have no sprite pack in any game this project holds.
+
+## `mitem.dat` — items (weapon fields only, 2026-11)
+
+`u32` count (796), then rows of 244 bytes (**Verified offline**: read from the retail file, shape checked against the engine's
+use). Fields read so far: weapon type byte at `+0x18` (1 fist, 2 sword, 3 spear, 4 bow, 5 gun, 6 axe, 7 staff; 51, 66, 56, 53,
+52, 57 and 50 items), weapon model ID `u16` at `+0x1E`, name at `+0x20`. Models 3100 to 3699 sit in the type their hundreds digit
+names (31xx sword to 36xx staff); fist models start at 3070; gag, special and large weapons use 37xx, 38xx, 4xxx and 9100. 261
+of 262 model files exist: model 9100 has none, and the game then leaves the mount disabled. The item an *army unit* carries is a
+separate in-memory record (type byte at `+0xE7`, model ID at `+0xCE`); the in-memory master table has a different layout from the
+file (its ID sits at `+0x28`, inside the file row's name text), and the loader was not read (**Unknown**). How a weapon is
+bound to the animation is in [assets.md](assets.md#how-the-game-draws-a-body-2026-11-offline).
 
 ## `mskill.dat` — evilities
 
@@ -143,6 +174,23 @@ and 210) have **no voice in D4**. Both dubs' tables hold 2,446 rows in 203 group
 archive agree one to one. Story-message voice (`SoundData_Msg_*.dat`, 8,974 rows keyed by message ID with no character
 field) was not opened, so lines in story scenes are **Unknown**. An import that gives them a donor voice invents one.
 
+**Which group a character speaks with (2026-11-24).** The group is the character row's `+0x1BA` plus the unit's personality, a
+signed byte at army-record `+0x1154` (`0x14014E7B0`, `0x14014EDA0`; **From decomp**). For the Prism Ranger family (`+0x1BA` =
+1220) the personality is the character ID minus 1220 instead (`0x14033E8B0`), and for IDs `0xED8` to `0xEDE` a 50 % roll sends
+the line to group 250, personality 0. Classes have groups base to base+2 (Prism Ranger up to 1223, so its ranks 4 and 5 would
+map to groups 1224 and 1225 that the table lacks and stay silent); uniques use their own base (Toro 240 and Kuro 250 have 6
+clips; Kojiro shares Bouncer's 1140 to 1142 and Baltis shares Armor Knight's 1080 to 1082).
+
+**How a line is picked (Verified offline, run in an emulator).** The selector `0x140467400` keeps the table rows whose group
+equals the argument and whose flag for the requested category is set (up to 512), then picks one uniformly at random. If the
+caller passes a pair key of 0 or more, a 20-entry table in the executable at `0x140777480` (`{speaker group, other group,
+line}`) is searched and, with probability 1/2, replaces the pick with that table's line (or with "none" when the pair is
+not listed). The player (`0x140466E60`) plays nothing for line -1 or an unknown line, does not restart a line that is already
+playing, and opens `<En|Jp>/<group>/VOICE_<line, 5 digits>.nlsd`. The volume is the global voice byte × the caller's argument
+/ 10 / 255. Table rows: the gain float at `+8` is 100.0 in 2,426 of 2,446 rows (84.0 in 17, 76.0 in 3), and the rate input at
+`+12` is 0 in 2,426 rows. Clips are MS-ADPCM mono at 21.9 to 22.2 kHz per clip. Which gameplay event passes which situation
+is the table below, from code and scripts, not from play.
+
 ## Voice situations
 
 Each line row has 12 category flags; a line can play in situation *n* when flag *n* is set. Scripts play voices with
@@ -180,9 +228,13 @@ identical English and Japanese recordings (mostly monster sounds).
 - Every table besides the five above.
 - The rest of `magic.dat`: effects, range, area, animation.
 - What the voice category flags mean in game terms.
+- Which events pass a pair key to the voice selector, how the personality byte is assigned when a unit is recruited, and
+  whether the 50 % redirect for IDs `0xED8` to `0xEDE` fires in play (all read in code, not run).
+- What `AnimeInfo.dat`'s 49 sheets are for.
 
 ## Sources
 
 - D5 Mod Kit development fork (Sean13128): `d5lib/d4source.py`, `docs/D4_IMPORT.md`, `docs/D4_VOICES.md`. (reader code not published; its results are the tables on this page)
 - This project's D4 → D5 porting research (2026-10).
+- 2026-11-23/25 additions (reward, mana and size fields against D5; item weapon fields; voice selector; face and cut-in rules): this wiki's offline checks of the retail files and the D5 Mod Kit development fork's `docs/D4_IMPORT.md`.
 - 2026-11 additions (EXP / mana formulas): this project's research, D5 Mod Kit development fork `docs/IMPORT_YIELD.md`.

@@ -26,6 +26,19 @@ This page says what that tells us, and what's still unknown.
   at `+0x0D + index`.
 - **Skills start event 12,000,000 + skill ID**, like D5. A new skill needs that event.
 - **Voice group and art sprite are different fields** in `char.dat` (`+0x1BA` and `+0x196`).
+- **Which picture a new character gets is decided in code, by two different rules** (2026-11, **Verified offline**): the
+  face number is the class face (colour ID rounded to tens) for class, rank and NPC rows, and the cut-in adds the unit's
+  colour byte. A new row on an existing body therefore shows that body's class face for every rank unless its ID is below 1000.
+  Details: [assets.md](assets.md#faces-and-cut-ins-which-picture-a-character-gets-2026-11-offline).
+- **A plain attack starts event `12,000,000 + 100 × weapon type`** (fist 1 to staff 7) for humanoid bodies and a body-specific
+  `12,010,000 + ...` event for monsters; a missing event falls back to 11,000,000. A new weapon type or body needs the matching
+  event ([functions.md](functions.md#unit-animation-from-action-to-motion-id-2026-11-24-and-25)).
+- **A weapon shows only if the motion has a node for its mount key.** The engine binds a weapon to one key (fist 10, sword 11,
+  spear 12, bow 13, gun 14, axe 15, staff 16 in the main hand; 110 to 116 in the second hand) and the shared motions place it;
+  a motion without that node draws no weapon (D4's motion 4047 has no gun node).
+- **Defend, victory and dying have no character motion** in the code paths searched; do not expect to override them by motion ID.
+- **Mesh parts:** a node whose `+4` word is 1 is drawn on four stored vertices, so an editor that treats it as a pivoted
+  rectangle misplaces the part ([assets.md](assets.md#how-the-game-draws-a-body-2026-11-offline)).
 
 ## Open questions
 
@@ -33,6 +46,7 @@ This page says what that tells us, and what's still unknown.
 - Does it read loose files or only archives?
 - Is the Xbox Game Pass build the same as Steam's?
 - What does `Data/DATA/anm0.fad` hold?
+- What `AnimeInfo.dat` (49 large sheets in the database archive) is for.
 
 ## Sources
 

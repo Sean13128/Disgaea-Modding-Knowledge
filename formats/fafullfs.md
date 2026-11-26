@@ -28,7 +28,7 @@ D6/D7 tools). All values little-endian.
 | 0x10 | 8 | Unknown |
 | 0x18 | 8 | Size |
 | 0x20 | 8 | Data offset |
-| 0x28 | 8 | Timestamp |
+| 0x28 | 8 | Timestamp. Disgaea 5's readers never read it, so any value works there (**From decomp**, 2026-11-25; addresses on the [Disgaea 5 functions page](../games/mainline/disgaea-5-alliance-of-vengeance/functions.md)) |
 
 **Path block:** NUL-terminated file paths (e.g. `en/<group>/voice_<line>.nlsd` in D4's voice archive).
 

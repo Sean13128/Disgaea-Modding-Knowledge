@@ -82,7 +82,7 @@ the value at row `+4`. Link units by serial, never by slot.
 
 The best-documented save. Unit records are `0x4750` bytes inside the game state; each caches its `char.dat` **row
 index**, which the game doesn't recompute on load. So mods must only **append** table rows with new IDs above the
-maximum, or old saves show the wrong class data. Details: [D5 functions](../games/mainline/disgaea-5-alliance-of-vengeance/functions.md#unit-record-in-the-game-state)
+maximum, or old saves show the wrong class data. Details: [D5 functions](../games/mainline/disgaea-5-alliance-of-vengeance/functions.md#unit-record-in-the-game-state) (more offsets: [unit record, more offsets](../games/mainline/disgaea-5-alliance-of-vengeance/functions.md#unit-record-more-offsets-compiled-from-the-kits-save-reader-and-decomp-reading))
 and [D5 modifiable](../games/mainline/disgaea-5-alliance-of-vengeance/modifiable.md).
 
 ## Sources

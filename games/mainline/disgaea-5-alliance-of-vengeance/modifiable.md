@@ -71,6 +71,8 @@ classes at 1360, 2340 and 2630):
 
 How many ranks the Recruiter and Reincarnation offer depends only on unlock flags, not on mastery or `JobRank.dat`.
 
+**Class name length (2026-11).** A `char.dat` name slot is 52 bytes. Imported class names carrying a source-game tag such as "Shark Dragon (DD2)" reach 18 characters, and the Recruiter's class grid showed 18-character names whole with no cut-off (**Verified in game**, modified executable `f789ddb7…`; the status page and recruit list widths were not checked). Two source games' classes with the same name need a tag to stay distinguishable in that list.
+
 ## Hard limits and crash causes
 
 | Limit | Value | What happens past it | Workaround |
@@ -85,7 +87,9 @@ How many ranks the Recruiter and Reincarnation offer depends only on unlock flag
 | `comb.dat` IDs out of order | — | Startup hangs | Keep sorted, reorder the matrix too |
 | Missing database table | — | Game can't start | |
 | Effect models | 400 | Crash at startup | Patch to load on demand (Kit). Loading on demand meets the next limit: build each model **once** per load (a loader that builds twice leaks a record per load) |
-| Vertex arena records (every built 3D model) | 1,024 (25 MB) | The record scan writes through NULL and the game crashes at `0x140308C5D` (**Verified in game**, modified executable, 78 attack casts into one session) | Stock preload already uses two records per model (the loader builds twice). Build lazy models once, and refuse a load when few records remain. Layout: [functions](functions.md#the-effect-model-vertex-arena-1024-records) |
+| Vertex arena records (every built 3D model) | 1,024 (25 MB) | The record scan writes through NULL and the game crashes at `0x140308C5D` (**Verified in game**, modified executable `f789ddb7…`, 78 attack casts into one session) | Stock preload already uses two records per model (the loader builds twice). Build lazy models once, and refuse a load when few records remain. Layout: [functions](functions.md#the-effect-model-vertex-arena-1024-records). With the Kit's fix and its 400-model cache one session of 201 casts stayed at 423 records and did not crash (**Verified in game**, 2026-11-21) |
+| PaletteInfo colour count (every bank's palette rows, i32 at row `+4`) | 1–256 | Any attack or special copies that many colours into a 256-colour buffer with no clamp. A count of `0x01000000` (a big-endian 256 left unconverted by an importer) overwrote the heap handle and crashed the first attack (**Verified in game**, modified executable `f789ddb7…`); Move was safe | Write the count as a little-endian 256 or less. The unmodified game's 2,006 banks hold 16–256. Layout: [functions](functions.md#the-attack-palette-copy-has-no-bound) |
+| Sub weapon drawn | Only for a unit with Double Bladed (evility 4503) holding a weapon in the sub slot | Weapon nodes 111–116 are disabled otherwise, whatever the animation says (**From decomp**) | Not a missing node: see [assets](assets.md#weapons-on-sprites) |
 | Draw-texture pool | 16,384 objects (0x58 bytes each) | A failed decode leaves a NULL texture in a draw packet, which the flush reads without a test ([functions](functions.md#draw-packets-texture-objects-and-stale-records)) | Keep the added `N + 2` pictures resident and the palette counts unchanged |
 | Monster class without a resident standing picture | — | Hire Character list crashes | Add it to the resident pack |
 | Stage without `DemoCheckDataBase` row | — | Game closes on the stage list | Add a row |
@@ -130,8 +134,9 @@ freeze was seen in game; the cause was traced offline in the executable unless n
 | A **new class with no Status portrait bank** | Opening Character → Status reads animation group `10000 + art ID` (a tall 336 × 1080 portrait); when it's missing the game crashes reading address 2 at `0x1402F5512` (caller `0x14040F8AB`). Equipment, recruiting and battle still work, so it shows up late | Ship an `anm(10000 + art ID)` bank for every new class (a copy of a generic class's Status bank with your own picture works) | **Verified in game** (Character Forge test, 2026-10-13) |
 | A **class description over 255 bytes** | The Recruiter copies the selected class's description into a fixed 256-byte field with no length check (`0x140663203`). Longer text overwrites the list-pane pointer after it, which the menu then calls through | Keep class descriptions ≤ 255 bytes. The Recruiter's help line is also **one row, clipped** at the panel edge, so in practice keep them much shorter (about 190–210 bytes already clips) | **Verified in game**: 13 classes whose 273-byte descriptions froze the Recruiter worked once cut to ≤ 210 bytes (2026-10-30); overwrite **Verified offline** |
 | A class family with **fewer than 3 personality rows** (`charPersonal.dat`) | The personality page dereferences its selection without a check (`0x658D50`, image offset) | Give every class three personalities | **From decomp**; reported by Overlord's author too |
-| **Fewer than 6 entries** in a class wheel | The wheel indexes `(cursor − 6 + count) % count`; below 6 the index goes negative (`0x666D19`, write through a null unit) | Keep at least 6 entries (Overlord pads short pages) | **From decomp** |
+| **Fewer than 6 entries** in a class wheel (pages with fewer than 6 classes repeat classes to fill the ring: **Verified in game**, 2026-11) | The wheel indexes `(cursor − 6 + count) % count`; below 6 the index goes negative (`0x666D19`, write through a null unit) | Keep at least 6 entries (pad short pages with filler entries) | **From decomp** |
 | A Skill Shop evility with `source = 3` (class evility) on a class with **no class mastery** | The eligibility check reads the class's mastery without a null check (`0x1407CDAE1`) | Imported classes use `source = 4` (character evility), owner = family | Crash seen in game (2026-10-18) |
+| A **unique** (`kind` 1) evility row left at `source = 3`, `mana_cost` 10000 (a character evility copied from a class evility) | The same predicate looks up the `JobRank.dat` row at `owner + 5`, gets NULL and reads address 4 (`0x1407CDA94`). It runs over every row, so any unit with extra unique-evility slots (bits 0–2 of `unit +0x3034`) opens the Skill Shop's list into the crash (2026-11-25) | Character evilities are `source` 4 and `mana_cost` 0 | **From decomp**; reproduced under emulation, **Verified offline**; seen as an error dialog in a playtest, not re-run live. Details: [functions](functions.md#the-skill-shop-eligibility-predicate-and-its-null-read) |
 | **Removing a custom class** while a save still has a unit of it | The save loads, then a scene writes through a null pointer (`0x1406B08DC`) | Keep the class installed, or move the unit to another class first | Seen in a controlled test |
 | No audio device under Wine / Proton | Crash at boot inside XAudio2 (`+0xC88E`) | Leave an audio device enabled | Seen in game (Wine) |
 
@@ -157,11 +162,12 @@ Not a crash, but easy to get wrong:
   (`unit+0x2E04`), `shop_rank` (`+0x50`) is below 1, and the unit doesn't know it yet. The other sort order uses
   `slot_cost` (`+0x18`). So a new class's evilities show up in the shop only if their `owner` shares the class's tens
   and `shop_rank` is 0. **From decomp.**
+- **Correction, 2026-11-25:** the list above is incomplete. A `kind` 1 (unique) row is dropped only when `source` is 4, or when `source` is 3 and the unit has none of the extra-slot bits (`unit +0x3034 & 7`); with the bits set it is offered and goes through a `JobRank.dat` lookup at `owner + 5`. The full step table is in [functions](functions.md#the-skill-shop-eligibility-predicate-and-its-null-read) (**From decomp**). The `owner / 10` test above was not re-checked.
 - **Skill Shop list size:** the Skill Shop's learn list (16-byte entries at screen `+0xFF48`, count `+0xFE7C`, built by
   `0x1407CDE50`) is filled **without a bounds check**; the space before the next field holds about **800 entries**
   (inferred from the screen object's layout, not tested). With very many learnable evilities this would overwrite the
   screen. (It is **not** the cause of the open Skill Trainer crash in the D5 Mod Kit fork's playtests: that crash
-  reproduces with a 41-row list, as a C runtime invalid-parameter fast-fail at `0x140116224`; its cause is still open.)
+  reproduces with a 41-row list, as a C runtime invalid-parameter fast-fail at `0x140116224`; its cause is still open.) **Update 2026-11-25:** a different Skill Shop fault, a null read at `0x1407CDA94`, was traced to a mod's evility row (see the crash table below); whether it is the same event as the fast-fail is **Unknown**.
 - **Write a literal percent sign as the full-width `％`,** the way vanilla does. Descriptions go through `printf`-style
   formatting, on some paths more than once (the D5 Mod Kit fork's research), so even an escaped `%%` can come back as
   a live `%` on the second pass and be read as a conversion.
@@ -236,6 +242,19 @@ Mods can carry byte patches as data (`patches/exe`). The fork's rules show what 
   count from 579 to 581 (two new ranges) and later to 583 as other hooks were added, with no code byte changed outside a claimed site.
 - A few bytes can redirect execution, so approve only mods you trust.
 
+## Finding who writes an address under Wine or CrossOver
+
+A crash that corrupts memory far from the faulting code needs the **writer**, not the victim. Under CrossOver (Wine on Rosetta)
+the **hardware debug registers do not fire** for the game, so a watch-point trace finds nothing. What works (**Verified in game**,
+D5 Mod Kit development fork, 2026-11-21): a *software write-watch*. Mark the page that holds the address read-only, add a
+vectored exception handler first in the chain, and on each write fault record the faulting instruction, restore write access,
+set the CPU trap flag and re-protect after the single step; compare the watched bytes at the step to see whether the write
+changed them. The selftest passed under CrossOver, a game counter incremented every frame named its exact instruction, and
+the frame rate stayed 60 with a two-writes-per-frame page watched. It named the palette-copy loop (`0x1402F9684`) in two boots.
+Limits: while one thread single-steps, the page is writable for every thread (another thread's write in that window is missed);
+writes done by the OS on the game's behalf return an error instead of faulting; each write costs two exceptions. The page
+holding the heap handle has no routine writers (0 faults in 168 s of battle), which makes it a good canary.
+
 ## Save notices
 
 - The Kit's "this save needs a disabled mod" notice appears only when a roster unit's class (`+0x2E04`) has no
@@ -256,6 +275,8 @@ Full list of ID ranges in use: [id-registry.md](id-registry.md).
 
 ## Open questions
 
+- Do the nine other imported D2 monster classes with the oversized palette count crash on their first attack, as the one fought live did?
+- Is the Skill Trainer fast-fail at `0x140116224` the same defect as the null read at `0x1407CDA94`?
 - Where is the 99,999,999 stat cap enforced, and what else did Unleashed patch?
 - Which functions control turn order, the command menu and Move/Jump totals?
 - What breaks first when a save made with a mod is loaded without it?

@@ -34,9 +34,58 @@ Older patch levels (`START.dat`, `START_1.dat`, `START_2.dat`) hold different ve
 | 0x1FC | name | 52 B | | high |
 | 0x230 | title | 52 B | | high |
 | 0x274 | aptitudes | 8 × u8 | | high |
-| 0x28B | palette | u8 | 0–5 | medium |
+| 0x28B | palette | u8 | 0–5 (class ranks 0–5 on ranks 0–5; Virunga 5) | high ([code](#battle-fields-in-the-chardat-row)) |
+| 0x19E | face selector | u16 | Picks the face atlas, row and (with rank) column; see [assets](assets.md#cut-ins-and-face-icons) | medium |
+| 0x1B8 | voice key | u16 | Key into the voice selector ([Voices](#voices)) | high |
+| 0x28E | voice override | u8 | Non-zero replaces the variant argument by its byte − 1 | high |
+| 0x28F | visual type | u8 | 0 humanoid (242 rows), 1 monster (237), 2 prop (79) | high |
+
+The battle fields (movement, resistances, aptitudes) are listed [below](#battle-fields-in-the-chardat-row).
 
 Stat order is HP SP ATK DEF INT RES HIT SPD.
+
+### Battle fields in the `char.dat` row
+
+**From decomp** (the unit builder at `0x10E77C`, clamp helpers `0x1077E4`..`0x1078A4` and the status screen at
+`0x25D998`, 1.40), measured over all 558 rows, **Verified offline** against a community character guide where noted.
+Offsets are within the 676-byte row. All values are single bytes unless a width is given.
+
+| Offset | Field | What the code does | Check |
+|---|---|---|---|
+| +0x000 | immunity mask (i32) | Copied to unit `+0x1160`. Xenolith `0x0FFF`; Pringer Z and Baal Slave `0x0FFFFFFF`; 0 for the rest. **Bit meanings not decoded** (Disgaea 5 uses bits 0 to 6, 0 to 13 or all, so the bit order can't be assumed equal) | code + data |
+| +0x1A2 (u16) | MOV | Unit `+0x1170`; clamp 1 to 31; first on the status screen | code |
+| +0x1A4 (u16) | flying flag, 0 or 1 | Unit `+0x117E`. 1 on the angels, Succubus, Mothman, Death, Shark Dragon, Sea Angel, Virunga, Lilliel, Desco, Gig, Metallia. Disgaea 5's equivalent also has a value 2 (Bits) never seen in D2 | code + data |
+| +0x1A6 (u16) | innate attack range of monsters (1 for most) | Unit `+0x1180`; third on the status screen | code |
+| +0x1A8, +0x1AA, +0x1B0 (u16) | HL, EXP and Mana reward bases | **Inferred** by pattern only (no code reader) | **Unknown** |
+| +0x274..+0x27B | aptitudes HP to SPD | Unit `+0x1514` | code |
+| +0x27C..+0x282 | weapon aptitudes: fist, sword, spear, bow, gun, axe, staff | Unit `+0x1146`; monsters hold 0 | code + data |
+| +0x283 | an eighth weapon value (casters 15 to 16, fighters 2) | Not copied; unit gets a constant 10 at `+0x114E` | **Unknown** |
+| +0x285 / +0x286 / +0x287 (signed) | resistance percent: **Fire, Wind, Ice** | Unit `+0x1168`..`+0x116A`; the damage code at `0xF5524` picks `+0x116B + element − 1` for spell element 1, 2, 3 and multiplies by `100 − value` (positive resists). There is no Star byte | code, plus the guide below |
+| +0x289 | kind and gender | Tens digit 0 unique, 1 human class, 2 monster class; ones digit gender (Laharl 1, Warrior 11, Lantern 21, Barbara 2) | code |
+| +0x28C | constant 10 on every row | Unit `+0x117C` | code + data |
+| +0x28D | JMP (Laharl 20) | Unit `+0x116E`; clamp 10 to 99; equipment bonus × 5; second on the status screen | code |
+| +0x290 | throw distance | Clamp 1 to 9; meaning inferred from clamp and screen order | code, inferred |
+| +0x291 | counter count | Clamp 0 to 9; inferred | code, inferred |
+| +0x292 | critical rate | Clamp 0 to 99; equipment bonus × 5; the byte is the percent the status screen shows (Laharl 6) | code, inferred |
+| +0x298 | 1 on uniques, 2 on classes | **Inferred**; no code reader | **Unknown** |
+
+The status screen lists MOV, JMP, range, throw, counter, crit in that order. The magic table's element byte is at
+`magic.dat +0x111`: Fire 1, Wind 2, Ice 3, Star 4 (the base spells 1001, 1101, 1201, 1301; measured over all 386
+rows). Disgaea 5's own rows for the old story characters (Laharl, Etna, Flonne, Fuka, Valvatorez, Petta, Desco) are
+identical to D2's in every field compared.
+
+**Cross-check against a community guide** (**Community-reported**: [Disgaea D2: A Brighter Darkness Character
+Guide](https://gamefaqs.gamespot.com/ps3/687861-disgaea-d2-a-brighter-darkness/faqs/68086) by Guilu, 67 characters
+and classes compared by name; read 2026-11-23). The guide's numbers equal the row for: throw 42 of 42 (monsters have no
+throw), counter 67 of 67, crit 67 of 67 (class rows inside the guide's per-rank range), JMP 67 of 67, flying 67 of 67,
+MOV 66 of 67 (Lanzarote: row 5, guide 4), monster range 25 of 25, and the Fire / Wind / Ice order on 65 of 66 (the
+miss is Valvatorez, where Disgaea 5's own row equals the table, so the guide entry is the outlier). The guide's weapon
+grade letters map to disjoint byte ranges: S 25, A 20, B 15 to 18, C 10 to 14, D 5 to 9, E 2 to 4.
+
+**Not mapped:** `+0x1A0` (u16, 3 to 6) is read as a multiplier by `0x18F50`; `+0x1AC`, `+0x1AE` (6 to 14, 10 to 18),
+`+0x1B2`..`+0x1BA`, `+0x28A`, `+0x293`..`+0x296`, `+0x29A`..`+0x2A3` have no confirmed meaning (`+0x293` and `+0x29A`
+track weapon type and class kind). The row holds no evilities, size, height, armor or monster weapon aptitude, and no
+weapon resistances.
 
 **Growth:** when a unit is created, the game takes each base stat word's **low byte** as that stat's initial growth
 seed (`func_00109FF0`, 1.40), and copies the eight aptitude bytes (`+0x274`) into the unit at `+0x1514`
@@ -206,7 +255,16 @@ port's recompiled build with the selector logged (about 600 picks in 12 runs, no
   columns proven natively, because those are played by engine code, not by skill scripts. Don't use it as evidence.
 - Not covered: nothing was heard, slots 4 and 9 beyond skill cues, and whether slots 2 and 5 depend on target side or
   spell element (only Heal, Fire and enemy casts were seen).
-- Characters without selector rows (Pringer Z, Baal Slave) are silent in the game.
+- **Silence** (**Verified offline**, rule proven with a test): no selector row exists for voice key 300 (Pringer Z) or
+  580 (the Baal series, including Baal Slave), nor for 93 other non-dummy rows; 153 `char.dat` rows in all have no
+  selector key (66 of them dummies, plus props, Pringer X and Z and the Baal series). Voice key 9999 has no `char.dat`
+  row. Nothing plays when no row matches or the list is empty. Category 1 IDs have Japanese routes but **no English
+  route**, so the English dub is silent for them (8,581 category-1 list entries have no English route).
+- **Update 1.40 changes 48 English clips** (voice banks 7, 21, 160 and 161), which affects Barbara and Xenolith's
+  category-2 IDs; which column each replaced clip serves wasn't traced.
+- The call chain, route tables and addresses are on [functions.md](functions.md#sprite-animation-and-cut-in-code-140-addresses-2026-11-24-to-11-25).
+  Columns 1, 3, 4 and 8 have no direct native caller and are reached only from scripts (opcode `0x4632`); what each
+  caller does stays inferred from the logged runs above (**Unknown** as proof).
 
 ## Game state in memory (1.40)
 
@@ -247,8 +305,10 @@ Stat order: HP, SP, ATK, DEF, INT, RES, HIT, SPD. Item icons are 32 × 32 cells 
 - The rest of `magic.dat` and `mskill.dat`.
 - Item, map and shop tables.
 - What changed between patch levels.
+- The immunity mask's bit order; the meaning of the unmapped `char.dat` bytes above; what HL, EXP and Mana bytes really are.
 
 ## Sources
+2026-11-20 to 11-25 additions (battle fields, community cross-check, voice silence): the D5 Mod Kit development fork's reads of the decrypted 1.40 executable and `START_4.dat`, and the community guide cited above.
 D5 Mod Kit development fork (Sean13128): `d5lib/dd2source.py`; (reader code not published; its results are the tables on this page) this project's DD2 source-pack research (2026-10).
 2026-11 additions (voice selector, `mskill.dat` values): D5 Mod Kit development fork `docs/SOURCE_VOICES.md`, `docs/EVILITIES.md`.
 2026-11-12 to 11-20 additions (voice columns, angel and flat groups, signature evility rules): the D5 Mod Kit development fork's offline reads of the decrypted executable (angel / flat members from `char.dat` of the verified `START_4.dat`) and its logged runs of the native port's recompiled build. **From decomp** / **Verified offline** as labelled.

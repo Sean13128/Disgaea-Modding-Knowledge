@@ -39,6 +39,16 @@ Animation IDs end in 1 (front) or 7 (back); the engine mirrors the other two dir
 are a humanoid's own standing loops, 7001+ its unique poses, and bodies that carry every action use 1 and 7 for standing.
 The first track is drawn on top.
 
+What the ids *mean* is not shared between games: the same number can be a different motion, and nothing in the files names
+them. See [Motion ids and what they mean](motion-names.md).
+
+**Disgaea 1 Complete draws its HD humanoids with Disgaea 5's animation module** (**Verified offline**, Switch v0
+executable and the Steam build of D5). The humanoid character ids bind the owner to a shared block 1 with binding key 1 and
+the body; block 1 is D5's resident block 1 renumbered (the same cell rectangles, 93 of 105 motions equal to a D5 resident
+motion key for key). A body supplies only its textures, palettes and its own standing motions (0, 6001, 6007, some also
+7001-7031). Any other HD character (monsters) plays its own body's motions. A converter can therefore put D5's resident
+motions on a D1 Complete body and get what D1 Complete draws.
+
 ## How Disgaea 5 reads each field
 
 Read from the loader, record builder and renderer of the Steam build (**B**); **From decomp** unless noted. Several
@@ -56,8 +66,21 @@ them as one number can change what the game does.
 | Transform `+4..+7` | One i32 pivot index | `0x1402F5A38` |
 | Texture info width / height | Used for buffer size and UV scale | `0x140301514`, `0x1402F8DD4` |
 
-Key cell, colour and param indexes are signed (−1 = none). Palette-info rows and node `+4` / `+6` weren't read by any
-function checked.
+**Palette-info colour count (a crash).** The attack set-up copies as many colours as a palette-info row's `i32 at +4` says
+into a fixed 256-colour buffer, with no clamp (the copy loop is at `0x1402F9550`, build **B**; from `start_basic_attack`,
+`0x140545C42`). Disgaea D2 stores that count as a big-endian i32 (256 = `00 00 01 00`); a converter that keeps the bytes makes
+D5 read 0x01000000, about 16.8 million colours, and the loop overwrites roughly 64 MB of globals after the buffer (the
+memory allocator's handle, the animation bank table, the effect arena). **Verified in game** (build B): a converted D2 monster
+bank crashed on every attack, the writer was found with a software write watch (see
+[automated testing](../guides/automated-testing-disgaea-5.md#finding-who-writes-a-memory-location)), and the same bank with
+counts rewritten to D5's little-endian form (clamped to 256) ran six actions (three attacks, a hit taken, two specials) without a crash while the unchanged bank
+crashed three of three times. In the clean game's 2,006 Japanese-archive banks every row's count is 16 to 256. A bank-checking tool
+should reject any palette-info count outside 1..256. In the D2 table the same row reads `num_colors` 0 and `unk` 256 when read
+byte for byte.
+
+Key cell, colour and param indexes are signed (−1 = none). Node `+4` / `+6` weren't read by any function checked. A
+palette-info row's `i32 at +4` *is* read (the colour count, below; corrected 2026-11-25: this page previously said palette-info
+rows were not read).
 
 **What gets drawn.** An animation's picture is node `root + 1` and its children. The root node is only read for its
 control keys (loop, end); its own child and next links are never followed (builder `0x1402F5450`, build **B**). Every
@@ -97,6 +120,7 @@ byte-identical; 6,990 bytes in 113 members are non-zero filler where the format 
 | Key | 12 | `+2` and `+3` are bytes with D5's values |
 | Cell | 18 | `+4`, `+5`, `+6`, `+7`, `+16`, `+17` are bytes. 16 bytes (no `+16` word) in `anm09006`, `anm09901`, `anm09903`, `anm09998` |
 | Transform | 16 | The pivot index is the word at `+6`; `+4` is 0 in all 126,052 rows (D5's i32 stored big-endian) |
+| Palette info | 8 | The colour count is one big-endian i32 at `+4`: rewrite it as D5's little-endian value (clamped to 256) or D5 overruns a buffer (see "Palette-info colour count" above) |
 | Others | as D5 | Read big-endian |
 
 Binding IDs used: D2 has 1, 10–17, 21, 31, 99, 111–116; D5 has 1, 10–17, 20, 21, 99, 111–116. Image headers: format

@@ -498,6 +498,81 @@ sound. Hand-picked D5 scenes remain the stand-in for the rest.
 | Unit voice call | `0x140252260` | Reads the personality byte at `unit+0x1154` |
 | Registered command records | from `0x14112E3D0`, 24 bytes each | In table order: `0108` is entry 3, `1418` entry 26, `1424` entry 27 |
 
+## Unit animation: from action to motion ID (2026-11-24 and 25)
+
+How a battle action becomes the motion a character plays. **Evidence:** **Verified offline** where the function was run in an
+emulator on the retail `Disgaea4pc.exe` (Steam build 6150765) or the whole table was checked; **From decomp** where the code
+was read but not run. Nothing here was watched in the running game. Where a row says "no motion found" it means no code path
+reached a pose setter within the bounded search, not that the game was seen to play nothing.
+
+**Motion ID = pose base × 10 + facing digit** (**Verified offline**, `0x1400F4F10`). The facing quadrant is `((camera yaw -
+stored yaw) in degrees + unit facing at +0x26C + 180 + 22 + 360) mod 360 / 90`: quadrant 0 gives digit 1 (front), 1 gives 7
+(back), 2 gives -7, 3 gives -1. A negative digit means the same motion mirrored (the final ID is `digit - base × 10`, and the
+animation module negates the X scale). A missing ID plays the owner's first motion. Pose commands `6510`, `6514`, `651C` and
+`6598` carry a **base**; `6500` and `6590` carry a whole motion ID. `0x1400F2090` stores the base and mode (mode 1 gives
+digits 1, 7, -7, -1; mode 4, used by `6510` for character IDs 240 and 250 (Toro, Kuro), gives 1, 7, -7, 3 from the camera yaw
+alone). Proven over 30,784 cases.
+
+**Which event an action starts.** The action struct holds the acting units (`+0x308`, up to 10 signed 16-bit IDs, the actor
+first), the affected units (`+0x31C`, first target first), the skill ID (`+0x7A0`) and the actor count (`+0x79C`).
+`0x1402DE3F0` runs one action: skill ID 0 goes to the plain attack (`0x1402E13A0`), anything else to the skill path
+(`0x1402E0490`). Both start the event through `0x140226F90` and `0x140227010` (a linear search of the `script.dat` event table;
+-1 when absent) and fall back to event 11,000,000.
+
+| Action | Event (**Verified offline** unless noted) |
+|---|---|
+| Plain attack, body type 0 (humanoid, the `char.dat` byte at `+0x298`) | `12,000,000 + 100 × t`, where *t* is the main weapon's type byte (0 counts as 1): fist 12,000,100, sword 12,000,200, spear 300, bow 400, gun 500, axe 600, staff 700. The second weapon (action `+0x37D0` set) uses the army record's `+0x2F7` |
+| Plain attack, body type 1 (monster) | A non-zero form ID at army `+0x1178` gives `12,010,000 + form`. Otherwise character IDs of 2001 and above give `12,010,000 + sprite`; below that, the sprite when `0x14017B050(id)` says so (a 30-entry list in the executable), else `12,010,000 + (ID / 10) × 10`. Kuro's event 12,010,250 does not exist, so it falls back to 11,000,000 |
+| Skill | `12,000,000 + skill ID` (the `magic.dat` ID, rows of `0x164` bytes, ID `u16` at `+0x28`); 420 of the 428 skill rows have their event. A skill is learnt when the army record's level (`+0x1130`) reaches its learn level. Learnset IDs 10344, 20071, 20072, 20211 and 20212 are not in `magic.dat`: `0x1401AF3D0` returns -2 and adds nothing, so they are never learnt |
+| Shortened animation (option) | The same ID `+ 100,000`, then for skills `(event / 10 + 10,000) × 10`, then 11,100,000 (**From decomp**) |
+
+Within an event tree the walk follows calls `0100`, `0104`/`0106` (the argument becomes a float local `$10001...` = value / 10),
+`0110` and `0114` (**From decomp**). Actor IDs used in trees: 101 to 110 the acting units, 151 the first target, 160 to 191 the
+target slots, 202 every target, 200 the event's own actor, 1000 to 1095 and 2000 to 2015 script objects. Commands `6400` and
+`6410` copy a unit's body to an object (event 12,000,010 makes object 1064 a copy of actor 101 and plays the swing on it).
+A humanoid plain attack uses actor bases 100, 104 and 110, a swing base of 199 + *t* (motions 2001 for fist to 2061 for
+staff), and three target helper events (12,000,030 to 12,000,035) that play bases 114 to 125 ending on 106; a monster swings
+with base 207 (2071). No script variable that encodes hit, miss, critical, counter or kill was found, so no branch can be
+labelled with an outcome.
+
+**Poses the engine sets itself** (**Verified offline**, `0x1400F0950`, `0x14028A800`; the rest **From decomp**). A census of
+every direct call to a pose setter in the executable found 371 call sites; the constant bases are exactly 0, 1, 5, 10, 11,
+100, 103, 105, 106, 110, 112, 115 and 118 (113 is written directly).
+
+| Base | When |
+|---|---|
+| 100 / 106 / 113 | Refresh: wait / held (`+0x29E` of 0 or more) / holding (`+0x2A0` of 0 or more; holding wins). Inside a script sequence: 10 (0 for monsters) |
+| 0, 1 | Stand; walking (`0x14023B360` stores base 1 while a unit moves) |
+| 110, 106 | Lifter and lifted unit (`0x1400EF8B0`); the thrower plays its 110 motion out (`0x14030E7E0`), the thrown unit gets 106 for 10 steps on landing (`0x140312850`). The pose during the flight was not found |
+| 105 | Level-up (`0x1402E3E20`: voice situation 10, base 105, sound 0x2332, a 90-step timer); also Dark Assembly senator reactions. 109 (humanoid) or 105 (monster) in `0x14028A800` |
+| 118 | Item use: the receiving unit for 60 steps (battle states `0x46`, `0x47`, `0x48`); senator reaction. An EXP item that levels the unit adds 105; the user has no pose |
+| 103, 11 | Move hop: a height change over 6 gives 103 (the army byte `+0x1159` of 0; 1 goes 103 down and 100 up; 2 uses base 10), then 11 with voice situation 7 for the landing. Motion 111 is not in `anm00001`, so humanoids play motion index 0 for the landing |
+| 115, 106 | Chain-damage battle state (`0x1402CFAC0`, `0x1402CA7C0` and others) |
+| 5, 112 | Dark Assembly proximity (`0x140288940`) and base-map objects (`0x14033B330`, `0x14033E360`) |
+
+**Actions that play no pose.** Defend (command-menu case 8, `0x14030B440`) marks the unit as having acted, sets `+0x620` to 3
+(keeping the old value at `+0x621`), adds 2 to `+0x506` (unless the unit has evility 0x267) and recomputes stats; those fields
+are read only by turn bookkeeping, damage and counter code and the status display. Victory is battle state `0x41A`, which starts
+script event 13 (no pose command). No pose setter is reachable within six direct calls of the menu, the victory state or the
+damage command `0x140126070` (script starters and indirect calls were not followed), so D4 plays **no motion for defend, victory
+or dying** (**Verified offline** for the reachability search). A unit whose HP falls below 1 at the refresh
+(`0x1400F3370`, `0x1400F2FE0`) loses its animation actor and shows OBF effect `0x26C` instead (**From decomp**). A few poses are
+hard-coded outside these paths (`0x1401E68A0`: -1551, `0x1401E8620`: 1521, `0x1401E86B0`: 1141).
+
+**Open:** the throw flight pose; bases 5 and 112 in detail; weapon-mastery skills (no reader of `char.dat` `+0x94` / `+0x114`
+was located); the exact Dark Assembly branches; any variable that tells hit from miss.
+
+### How the engine decodes a script command (2026-11-24)
+
+`script.dat` is a `u32` count, offsets, event IDs, then flat command lists (`u8` group, `u8` sub, operands; group 0 ends the
+event). The start-up function `0x140001540` creates **482** command objects (126 inline, 356 through helper constructors), each
+holding the command ID, a handler and a vtable that names the operand type list. An operand slot is a `u8` kind followed by a
+literal of the type's width when the kind is 0, else a `u16` variable ID; four commands (`if`, set variable, call `0104`/`0106`,
+and string `6E20`) read their own layout. Decoding with these widths, all **24,036** events end exactly on their terminator,
+and a deliberately wrong width breaks that (**Verified offline**). D5's operand widths applied to D4 data decode only 19,595
+events (4,441 raise errors and 5,086 of the rest read a different command sequence), so a D5 script reader cannot read about a
+quarter of D4's events.
+
 ## Effect textures
 
 D4 effect models (OBF v2) embed textures in the `nismultitexform` format. Reader `0x1404516D0` (dispatched from
@@ -520,6 +595,7 @@ to D5's ARGB TXF without loss (**Verified offline**).
 - What exits Fear the Great's loop (script variable `10500`), and the layout of the two 16-byte-short `color32`
   effect textures.
 - Live checks of the Aegis rule at direction boundaries.
+- The throw flight pose, bases 5 and 112, and whether any code plays a motion for defend, victory or dying through a script starter or an indirect call (the search followed direct calls only).
 
 ## Sources
 
@@ -527,6 +603,7 @@ to D5's ARGB TXF without loss (**Verified offline**).
   expansion reports (`rules/bloody-battle`, `rules/d4-activation`, `rules/d4-provider`, `mvp-evility-sweep`,
   `mvp-unique-type`, `mvp-script-c`, `effects`), which run original D4 instructions in an emulator.
 - D5 Mod Kit development fork (Sean13128): `d5lib/d4source.py`, `d5lib/d4scripts.py`, `docs/D4_RULES.md`.
+- 2026-11-24/25 additions (action to event to motion chain, pose census, command registration): this wiki's offline checks of the retail files (functions run in an emulator, whole-table checks).
 - 2026-11 additions (operand widths from D4's parsers, special-attack scene conversion, effect extensions, signature
   evility rules): the same fork's `docs/D4_SCRIPTS.md`, `docs/D4_EFFECTS.md` and `docs/EVILITIES.md`, and this project's
   November special-attack and signature-evility reports (offline checks; the scenes were played in D5 only as stated

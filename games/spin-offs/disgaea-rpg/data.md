@@ -110,6 +110,28 @@ mastery level (4, 9, 15, 22, 30, 40).
 - **Heal-amount modifier (effect 9, target 11, timing 5):** the master has no wording separating "healing received"
   from "healing given", only "enemies' healing amount". Timing 5 (wave start) reads as always on in D5.
 
+## `character` row and per-character text (2026-11-23 to 11-25, Verified offline)
+
+**Identity:** the character ID is also the look, the prefab and every file stem ([assets.md](assets.md#unit-prefabs-and-animation-2026-11-24-to-11-25)).
+Fields seen in the 952 rows: `id`, `character_type` (1 or 2; 2 marks monsters, which changes the attack animation the
+client fires), `character_special_type`, `unique_flg`, `inversion_type` (1 on 21 rows, 2 on two), `grazing_type`,
+`pos_x`, `pos_y`, `scale_x`, `scale_y` (two-element arrays; 546 of 952 are zero or one; **no reader was found in the
+client's traced code, use Unknown**), `mini_pos_x`/`mini_pos_y`, `cv_name`, `best_weapon_type`,
+`m_potential_class_id`, the leader-skill links above, and the stat block: level-1 values plus a per-level gain per
+stat, element resistances `attr_fire`, `attr_water`, `attr_wind` and `attr_star`, `gender` (1 or 2 on uniques) and
+`weapon_mastery_rank_1` to `_9` (ranks 0 to 10 for the nine weapon types of the table above). No D5 mastery or
+resistance table is defined by these fields; mapping them onto Disgaea 5's scale is an adaptation, not a source fact.
+
+**Profile text.** `characterintroduction` (644 rows) is the roster profile: `id` is the card, `img_id` the character ID,
+`name`, and a `description` of 1 to 15 lines (up to 216 characters). Of the 146 base characters the project tracks,
+122 have a usable profile; of the other 24, 21 have no row with their ID, 2 have a row that names another character
+and 1 holds placeholder text. 39 characters have two to four rows with different text, so "the" profile of a card is a
+choice. The other text-bearing masters are `characterintformation` (20 rows of short story hints), `charactersubinfo`,
+`charactername`, `characterstory`, `characterstorytalk`, `guestcharacter`, `help` and `collaborationtext`; none holds
+a per-character profile. The JP client has Japanese only: there are no per-language columns, so any English names,
+titles or profiles come from outside the client (the community wiki above), which is why the title section lists so
+few.
+
 ## Class titles (English names)
 
 `characterclassname` holds a title per character and star rarity, and `character` holds up to four per-rarity title
@@ -146,8 +168,10 @@ Bank layout and cue names: [assets.md](assets.md).
 ## Open questions
 - The other 102 `command` effect types; the remaining `leaderskill` values. The IL2CPP metadata is encrypted.
 - How the Global client differs.
+- What `pos_x`, `pos_y`, `scale_x` and `scale_y` on the `character` master are for; nothing in the traced battle code reads them.
 
 ## Sources
 This project's Disgaea RPG table extraction report (2026-10-27).
+2026-11-23 to 11-25 additions (`character` fields, profile text): the D5 Mod Kit development fork's and this project's offline reads of the JP masters.
 2026-11 additions (`leaderskill` values, skill tables, voice folders): D5 Mod Kit development fork `docs/EVILITIES.md`, `docs/IMPORT_GATES.md`, `docs/SOURCE_VOICES.md`.
 2026-11-12 to 11-20 additions (potential type and weapon conditions, more effect codes, class titles, passives in Disgaea 5): the D5 Mod Kit development fork's offline reads of the JP masters, its kit docs, and the community wiki cited above.

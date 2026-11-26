@@ -209,6 +209,8 @@ class, IDs `family×10 + 0..5`, e.g. Warrior 1010–1015), per NPC and per map o
 
 16 more fields are unnamed (`unk_`/`pad_`).
 
+**Reader notes (2026-11-25, **From decomp**, read from the executable's export):** `kind_gender` is read only to choose the random-name list for a created unit (values 0–2 keep the row's own name); no reader was found for `is_unique`; a partial `immunity_flags` mask has no established bit order (only 0 and all-bits-set are understood).
+
 **ID ranges** (Kit CLASSES.md, EXE_ANALYSIS):
 
 | Range | Use |

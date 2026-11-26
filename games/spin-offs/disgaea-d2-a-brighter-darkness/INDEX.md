@@ -22,6 +22,20 @@ characters (Adell 400, Mao 430, Zetta 460, Baal 580 …); their real art is in `
 add-on archives first, newest first. Likewise `START.dat` names add-on characters in Japanese, while `START_4.dat` has
 the English names (**Community-reported**: Character Forge).
 
+**Archive overlay order** (**From decomp** and **Verified offline**, 1.40; the rule is tested with a broken variant): the
+game registers `START.dat` then `START_1.dat` … `START_7.dat`, and `ANM_HI.dat` then `ANM_HI_1.dat` … `ANM_HI_6.dat`,
+into pack lists, and a lookup scans from the last registered back to the first and takes the first name match. So
+`START_7` beats `START_6` … beats `START`, and `ANM_HI_6` beats … `ANM_HI`. The effective `char.dat` is therefore the
+copy in `START_4.dat` (the last pack holding it); the copies in `START.dat`, `START_1.dat` and `START_2.dat` differ
+from it in 100 rows. A reader that takes the first match gets the wrong art for some characters (see
+[assets.md](assets.md#sprite-banks-for-a-character)).
+
+**Disc, update and DLC:** the disc's `Data/` is the base. Update 1.40 adds `START_7.dat` (holding `mitem.dat` and
+`saveicon.dat`) and replaces `SndPakVoiceEN_0.pak` (48 English clips differ) and `SndPakMsgEN_4.pak`. The DLC (45
+`flag*.edat` files, NPD-protected) holds no art, tables or audio. The game's file layer builds root-relative paths;
+that the PS3 puts the update over the disc by replacing files of the same relative path is assumed, not read
+(**Unknown**).
+
 ## Archives & containers
 
 - **NISPACK**, as in Disgaea 5: `"NISPACK\0"` + 16-byte header, 44-byte entries with 32-byte names. The Kit's D2

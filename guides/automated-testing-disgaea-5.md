@@ -176,6 +176,14 @@ no enemy stands in that area.
 - **Read positions again before every cast.** The nearest enemy walks to the caster during the enemy phase, so a distance
   worked out once per battle is stale from turn 2. Every failure of this kind in the later sweep happened on turn 2 or 3.
 - One skill refused four different geometries in two sessions. Treat that as **unproven**, not as a retry.
+  **Update 2026-11-21:** two such skills were later explained by the geometry the skill's own data asks for, not by a
+  conversion fault. Read the attack's area shape from its data before choosing a cell: **Final Arm** (a Disgaea 4 special
+  converted to D5) hits one panel **3 ahead in line**, and its shape also moves the caster onto the panel *behind* it, which
+  must be free; an enemy standing 1 or 2 panels ahead answers "Attack zone obstructed". **Panzer Parrot** hits the three panels
+  3, 4 and 5 ahead. With those geometries Final Arm cast on the first attempt (the caster moved onto the panel behind, as the
+  shape says) and Panzer Parrot cast too (**Verified in game**, build B). The earlier refusals therefore were the
+  placement, and a diagonal placement the driver had tried was wrong. A fixed distance table is the fallback; the area shape
+  is the rule.
 - 9 of 54 attempts (17%) failed this way in the later sweep, eight of them skills the earlier sweep had already
   explained: the knowledge sat in a report, not in the driver. Put each learned rule into the driver's table.
 
@@ -188,14 +196,21 @@ no enemy stands in that area.
   restarts the game and resumes.
 - Stop on a counter, not on time (see the next section).
 - **Several casters in one battle** (each on its own tile and lane, one cast per caster per round, one End Turn per
-  round) would share the 30% overhead. It was designed and tested against a fake game; whether the game's dispatch limit
-  allows three casters, and whether the next caster can still be commanded after the first one's Execute, is **Unknown**.
-- Log the frame rate once a minute for the whole run, with the front application on macOS. The runtime's own `perf` line
+  round) share the 30% overhead. **Verified in game** (2026-11-21, build B): three casters deployed in every battle of a nine-
+  battle run, the second and third were commanded and cast after the first one's scene, one End Turn per round served
+  all of them, and each caster got a different enemy. The limit is **not below three**; a fourth caster was not tried, so the
+  limit above three is **Unknown**. The third caster is the slowest to deploy (28 to 88 s each). A formation that does not fit
+  beside the other casters should fall back to one caster per battle. The first placement move often leaves the unit where it
+  was, so the driver tries again, picking another enemy, rather than failing.
+- Log the frame rate once a minute for the whole run, with the front application on macOS (the front-application query
+  returns nothing from a background process with no window-server connection, so record it from an interactive shell or
+  leave it unknown; a first version logged junk). The runtime's own `perf` line
   was capped at 60 lines and only wrote when three frames in ten seconds were slow, so after 14 minutes it fell silent
   and a doubling of deploy times could not be tied to frame rate (see
   [Mac and Linux](modding-on-mac-and-linux.md#the-hidden-window-can-drop-to-1-frame-per-second)).
 - Skipping the scene: holding the left Alt key from the Execute prompt started the scene and skipped it, cutting it from
-  about 11 s to 6.7 s in 9 of 10 attacks; a mid-scene skip key works too (**Verified in game**). Use it only when the
+  about 11 s to 6.7 s in 9 of 10 attacks; a mid-scene skip key works too (**Verified in game**). In a later run the
+  skipped scene took about 3.0 s against 3.8 to 7.5 s normally, with the effect arena unchanged (no effect loads). Use it only when the
   question is damage or targeting: it skips effect loads, so it proves nothing about loading or looks.
 - Backing out of a refused target: pressing Cancel on the map **un-queues** the unit's pending action, and pressing it too
   often undoes the move as well. An earlier run saw "Execute does nothing" for a queued attack; the cause found later was
@@ -216,7 +231,10 @@ after every distinct action, and graph it.
   the game's own allocator run in an emulator crashes at the same instruction after 1,023 cycles; a simulation of the
   whole session predicted exhaustion at cast 77 of 78, and the live crash came at cast 78). Lesson: a probe finds the
   limit, but only reading the code finds the cause; and a session simulator driven by the attack lists predicts a
-  counter better than casting does. Whether the fix holds live is **Unknown** until a long soak finishes.
+  counter better than casting does. Whether the fix holds live is **Unknown** until a long soak finishes. **Update 2026-11-21:** a later run of 50 first-time
+  attacks in one session saw the used count rise with each new attack and **plateau at 423 of 1,024**, with no crash in nine
+  runs, the same plateau as the run before (**Verified in game**, build B). That agrees with a fixed leak, but it is not the
+  long soak; the second arena (terrain and overlays) was left alone.
 
 ### Testing effects that need hits to land
 
@@ -246,6 +264,57 @@ Effect rows checked this way and passing, with a control each: SP drain on hit (
 action nullified, a hostile heal reduced by 35%, benched-unit healing, and a per-round counter table. Several others
 stayed "not readable" and are recorded as such.
 
+### Testing attacks that hit several targets
+
+A multi-cell attack needs several enemies in its area, and a battle with four enemies that never move has no natural
+clusters. Arrange them: write each enemy's actor position (the pair of floats that hold the cell centre, 12 × cell + 6, and
+the unit's two u16 cell coordinates), then read the cells back through the harness before casting, since the game's own area
+selection is the thing under test. The memory write does not change what is tested (which units the skill's area takes).
+Findings from 44 multi-cell attacks, 50 casts (**Verified in game**, build B, attacks converted from Disgaea 4):
+
+- Check each target's HP changes in **decrement steps** (the HP bar steps down once per hit) as well as amount. Add a
+  **control**: a single-cell attack on the same formation, with one enemy in the area and three beside it, must hurt exactly
+  one. Add a **bystander** outside the area and require it to lose nothing. No area enemy was missed and no bystander was
+  hurt in any of the 50 casts.
+- A control that cannot be read is "not readable", not a pass: Final Arm's control was blocked because the formation put a
+  neighbour on the line in front of it.
+- **A target losing HP twice is not necessarily a double hit.** Six attacks showed one target hit twice in some casts
+  (the same attack and geometry passed on the repeat). The cause, found by reading the game's action queue every 0.3 s
+  while the scene played, was a **normal Disgaea 5 mechanic: a counter to a counter**. An enemy hit by the special can
+  counter-attack the caster; the caster can counter that counter; the second attack is the target's second HP step. The
+  special's own hit landed once on every target, at one instant (**Verified in game**, build B: 9 doubled casts across five of
+  the six attacks, every one a depth-2 counter; the sixth drew no counter in two casts and is the same by analogy, a
+  reading). The stock D5 attack tested in the same formation drew counters from enemies in three of three casts. It
+  only appears when a target stands next to the caster, which is what let them counter: single-target casts at a distance of 2
+  or 3 panels never showed it, because melee enemies could not reach.
+  Offline signs that pointed the same way: the same attack and geometry passed on one cast and failed on the next; the extra
+  amount did not repeat as the target's own hit did (an independently rolled attack); failing casts lasted longer than passing
+  repeats; and it happened with a single caster, which ruled out an ally's Support Attack.
+- So a multi-target verdict should count the cast's own steps (one per target), and **record, not fail on**, the reaction
+  steps that come from queued counters (and report them separately). Read the queue (the battle manager's pending-action list,
+  each entry's actor, skill, depth and targets) to attribute every HP step to an action.
+
+### Finding who writes a memory location
+
+When a global is corrupted and a breakpoint is unavailable, a **software write watch** can name the writer. It was built into
+the runtime as a command (off by default, available only when remote control is on) and tried under CrossOver and Rosetta:
+protect the page read-only, catch the access fault with a first-in-chain vectored exception handler, restore write access, set
+the CPU's trap flag so the very next instruction faults a single step, compare the watched bytes on that step, and record the
+faulting instruction's address, its bytes, the old and new bytes, the registers, and an unwind naming modules. Re-protect and continue.
+
+- **Verified in game** (build B): the watch ran under the compatibility layer at an unchanged frame rate (60 fps), a self-test
+  passed (fault, single step, a change record naming the writing function), and on a game global that increments every frame it
+  named the exact instruction. Cost: two exceptions per write to the watched page (a page written twice a frame cost nothing
+  measurable). It found the writer of the corrupted allocator handle in minutes (an unclamped palette copy, see
+  [anm](../formats/anm.md)), in two separate boots at the same instruction.
+- Limits: while a thread single-steps its write the page is writable for every thread, so another thread's write in that
+  window is missed or misattributed; writes the OS makes on the game's behalf fail instead of faulting; at most 64 bytes
+  per watch; the fallback that re-protects from a helper thread raced and was not used. A control run (the unfixed content
+  crashing three of three while the fixed content ran six of six with zero writes to the page) is what showed the cause was
+  right, not the watch alone.
+- Make the arming command impossible to reach unless remote control is on, and test that wiring offline: nothing is
+  protected or hooked until a `watch` command arrives.
+
 ### Pipeline fixes from the same sessions
 
 - **Roll back only what the run wrote.** A file the install created (the effect archive, absent at backup time) is removed on
@@ -268,6 +337,8 @@ stayed "not readable" and are recorded as such.
   evidence images as a short list of what to look at.
 - Evility effects in battle were proven at layer 2 only until 2026-11-12. Live checks since then cover about twenty rows
   (see "Testing effects that need hits to land"); most evilities are still proven at layer 2 only.
+- Multi-target and counter findings come from one formation (three enemies on the four panels around the caster and a
+  bystander diagonal), one facing and one height. Other formations, facings and heights were not tried.
 - The live harness depends on this project's machine setup (macOS, one compatibility layer); whether the same pipe and
   guards behave the same on Windows or Proton is **Unknown**.
 - The rare freeze under the compatibility layer is explained (a stale bank record in the game's drawing code) and was not
@@ -278,6 +349,6 @@ stayed "not readable" and are recorded as such.
 
 This project's harness and test reports (2026-10 to 2026-11); the D5 Mod Kit development fork's `docs/GAME_TRUTH.md`,
 `docs/IMPORT_GATES.md`, `docs/EVILITIES.md` and `docs/ANM.md`. Sweep, effect-check and pipeline-fix notes, 2026-11-12 to 2026-11-20:
-this project's live-run reports. The remote-control idea follows
+this project's live-run reports; multi-caster, multi-target, counter-reaction and write-watch notes, 2026-11-21: the same. The remote-control idea follows
 [disgaea5autoplay](https://github.com/Grid487/disgaea5autoplay) by Grid487 (a scene registry and menu actions); the
 resident-placeholder and facility shortcuts follow Cryswar's Overlord. D5 Mod Kit is by eraser4521 (MIT).

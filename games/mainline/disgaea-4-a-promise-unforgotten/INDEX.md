@@ -13,12 +13,12 @@ The PC version is also on Xbox Game Pass; whether its files match the Steam buil
 | Path | Type / format | Contents | Notes |
 |---|---|---|---|
 | `Disgaea4pc.exe` | x64 PE, image base `0x140000000` | Game executable | See [functions.md](functions.md) |
-| `Data/DATA/<LANG>/DATABASE_<LANG>.dat` | NSAC v2 archive | Data tables: `char.dat`, `mskill.dat`, `magic.dat`, `charhelp.dat`, `charPersonal.dat` … | [data.md](data.md). One per language folder: `CN`, `EN`, `FR`, `JP`, `KO`, `TW` |
+| `Data/DATA/<LANG>/DATABASE_<LANG>.dat` | NSAC v2 archive | Data tables: `char.dat`, `mskill.dat`, `magic.dat`, `mitem.dat`, `charhelp.dat`, `charPersonal.dat`, `script.dat`, `AnimeInfo.dat` (49 large sheets, purpose **Unknown**), `TextureInfo.dat` … (the JP copy is `JP/DATABASE.dat`) | [data.md](data.md). One per language folder: `CN`, `EN`, `FR`, `JP`, `KO`, `TW` |
 | `Data/DATA/<LANG>/<LANG>_GameString.dat` | Text | UI and game strings | |
 | `Data/DATA/<LANG>/EFFECT.dat`, `BG.dat` | Archives | Effects, backgrounds | |
-| `Data/DATA/ANM_HI.dat` (1 GB) | NSAC of `anmNNNNN.lzs` | Sprites; illustrations in groups `10000 + body` | Language folders also have `ANM_HI_<LANG>.dat` |
+| `Data/DATA/ANM_HI.dat` (1.2 GB) | NSAC of `anmNNNNN.lzs` (2,084 members) | Sprites; illustrations in groups `10000 + body (+ colour byte)`; the shared humanoid motions in `anm00001` | Language folders also have `ANM_HI_<LANG>.dat` (EN, FR, KO, TW, CN; none for JP; 120 to 125 members each, all also in the base). See [assets.md](assets.md#how-the-game-draws-a-body-2026-11-offline) |
 | `Data/DATA/anm0.fad` (41 MB) | FAD | | Purpose **Unknown** |
-| `Data/DATA/WF.dat` | Archive | Face icons, `swf<body>.nltx` | |
+| `Data/DATA/WF.dat` (15 MB) | NSAC v2, 529 members | Face icons, `swf<NNNN>.nltx` | The number is not always the colour ID: [rule](assets.md#faces-and-cut-ins-which-picture-a-character-gets-2026-11-offline) |
 | `Data/DATA/START.dat` | Archive | Start-up resources; contains `InProgramTxt.dat`, whose strings hint at a debug menu (**Community-reported**: TCRF) | |
 | `Data/DATA/MAP.dat`, `MAPDATA.dat` | Archives | Map geometry, map data | |
 | `Data/DATA/OBJ.dat`, `TEXTURE.dat` | Archives | 3D objects, textures | |

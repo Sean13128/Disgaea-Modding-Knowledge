@@ -9,7 +9,7 @@ project; corrections are welcome.
 | [Your first Disgaea 5 mod (D5 Mod Kit)](first-mod-disgaea-5.md) | New modders | Not tested |
 | [Your first Disgaea 7 mod (Makai Kit)](first-mod-disgaea-7.md) | New modders | Not tested |
 | [Your first Disgaea PC mod (pg_disatools)](first-mod-disgaea-pc.md) | New modders | Not tested |
-| [Bringing a character from one Disgaea into another](porting-characters.md) | Experienced modders | From two completed routes |
+| [Bringing a character from one Disgaea into another](porting-characters.md) | Experienced modders | From two completed routes; includes a measured-comparison method |
 | [Building character packs from your own game copies](building-packs-from-your-own-game-copies.md) | Importer and tool builders | Method used by this project |
 | [Keeping game text out of a mod repository](keeping-game-text-out-of-a-mod-repo.md) | Mod repository maintainers | Method used by this project |
 | [Modding on macOS and Linux](modding-on-mac-and-linux.md) | Mac, Linux, Steam Deck users | Collected notes |

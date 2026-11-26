@@ -194,7 +194,8 @@ from 101, each `{s16 file index, s16 base volume (0–0x7FFF), s32 loop start, s
 |---|---|---|---|
 | 0x00 | name | Shift-JIS | |
 | 0x21 | title | Shift-JIS | |
-| 0x45 | (class type?) | u8 | Values 0/1/2/4/6/8; meaning **Unknown** |
+| 0x44 | type | u8 | 3 battle unit (280 rows), 4 Prinny (10), 0 static or cutscene (73) (**Verified offline**, 2026-11-24) |
+| 0x45 | class group | u8 | 0 human, 4 monster, 6 felynn / lilim; 8 is not named; values 1 and 2 also occur; not fully decoded |
 | 0x49 | palette | u8 | Verified against 287 rows. This is the palette a unique character really wears: art cut from colour 0 looks wrong for the 13 or so uniques whose byte is above 0 (Prism Blue: body 2610, palette 1) |
 | 0x54 | aptitudes | 8 × u8 | ×10 |
 | 0x6A | base stats | 8 × u16 | |
@@ -212,6 +213,38 @@ skills or evility. Block 3510 is a prop body: one 128 × 256 texture and six one
 the same pattern as the Receptionist (3600). There is no face for 3510, no cut-in and no `new_bu` bust among the 124.
 Forty voice clips are named for her (`en_a_amom001`, `en_h_hmom001…025` and special variants; the speaker was not
 checked by listening). The Disgaea RPG story art shows the same woman (matched by name, not by a shared file).
+
+**More decoded fields (2026-11-24, Verified offline for the layout; meanings marked Community-reported come from the
+pg_disatools [CHAR.DAT page](https://github.com/ProgSys/pg_disatools/wiki/CHAR.DAT), the Disgaea PC record, whose summed
+offsets are off by one after the weapon block, so these were re-measured on the HD row).** No game code was read for these:
+
+| Offset | Type | Field | Evidence |
+|---|---|---|---|
+| 0x47 | u8 | kind and gender: uniques 1 / 2, classes 11 / 12 human, 13 monster | Verified offline (pattern) |
+| 0x4B | u8 | jump | Community-reported + data |
+| 0x4C to 0x52 | 7 × u8 | weapon growth: fist, sword, spear, bow, gun, axe, staff | Community-reported + data; unit against D5's mastery not proven |
+| 0x5C | u16 | immunity bit mask (values 0x00FF and 0x003F, else 0); bit meanings not decoded | Community-reported |
+| 0x66 | u16 | throw | Community-reported + data |
+| 0x68 | u16 | description ID (member 47); 0 = none | Verified offline |
+| 0x7C | u16 | movement (slow giants 1 to 2); `+0x7A` is the other candidate | Community-reported; not code-verified |
+| 0x7E | u16 | movement class: 0 walk, 1 fly, 2 warp | Community-reported + data |
+| 0x8E | u16 | counter | data; meaning not code-verified |
+| 0x90 to 0xB7 | 20 × u16 | learned skill IDs (member 40 IDs) | Verified offline |
+| 0xB8 to 0xDF | 20 × u16 | learn levels | Verified offline |
+
+Bytes `+0x42, +0x46, +0x53, +0x88, +0x8A` are 0 in every row; `+0x62` (100), `+0x64` (20) and `+0x86` (10) are constant;
+`+0x48` has 11 values; `+0x82`, `+0x84` and `+0x8C` are rank-scaled and unread (candidates for HL, EXP or mana, **Unknown**).
+**Not in the row at all:** HL, EXP, mana, yield weight, crit, normal attack range, resistances, height, size, evilities
+(Disgaea 1 has none), voice and Magichange. **Languages:** the same row order and numeric block appear in member 42 (Japanese), 43
+(English, Shift-JIS), 44 (Chinese), 45 (Korean) and 46 (French), the 42/44/45 tables as UTF-16LE with a 216-byte stride (every
+field from `+0x44` sits 8 bytes earlier, type at `+0x3C`). Descriptions exist only in English (member 47) and French
+(`SUBDATA_FR.DAT` member 47); 46 of the 363 rows have a description that resolves. The PS4 copy's numeric tables (members 40
+to 45) are byte-equal to the Switch's.
+
+**Shared bodies (Verified offline).** Several rows draw another row's art: block 2610 serves Prism Blue and Yellow, Carter and
+the two Astro rows (palettes 1 to 5), 1130 serves Gatekeeper (palette 0) and Serra Winguard (5), 2500 Mid-Boss and Vyers, 2180
+Vampire and Maderas, 2190 Alternate and True Overlord, and 50 Jennifer and Jn:Revamp (palette 1). A generic class is six rows
+(IDs first to first+5, palette byte 0 to 5): Strider 1140 to 1145, EDF Soldier 1150 to 1155, Vampire 2180 to 2185.
 
 Rows include 61 cutscene poses (IDs 5000–6001), Mid-Boss repeats (2510/2520/2530), six "Vassal" monsters (3070–3120)
 and four rows with no HD sprite (2917 Dimension Phone, 3200–3202).
@@ -232,7 +265,7 @@ name and a NUL, then `u32 entry size`, `u32 0`, `u32 packed size`, `u32 raw size
 [ykcmp](../../../formats/ykcmp.md)). Decoded, it is 1,024 palette bytes (RGBA, alpha 255) then 65,536 linear 8-bit
 indices: a full-frame head-and-shoulders on white, 256 × 256 (262 of 268 have a white corner pixel).
 
-**The game's key** (**From decomp**, Switch v0): `FUN_7100006af8` formats `sprintf("swf%04d", sprite + palette)` from the
+**The game's key** (**From decomp**, Switch v0; the function was also run in an emulator over the character table and equals the rule below, **Verified offline**, 2026-11-24): `FUN_7100006af8` formats `sprintf("swf%04d", sprite + palette)` from the
 character-table row (sprite `+0x60`, palette `+0x49`, or the unit's own palette), with special IDs 2300 → 2300,
 2301 and 2302 → 2301, 2918 → 2230 and 3190 → 3600. The status draw code (`FUN_71000840a8`, `FUN_7100089844`) looks the
 name up under the `"wf"` texture group; the format string is used by four functions. With this key the set covers every
@@ -276,6 +309,10 @@ effect in all four lists. Some characters alias another's clips (Vyers uses Mid-
 Audio: Disgaea PC `DATA.DAT` → `VOICE01/02[_EN].PBD` (DSARC FL) → Ogg Vorbis 16 kHz. Clip names are identical in the
 PC, Switch (`.nlsd` type 8) and PS4 (`.nlsd` wrapping `VAGp` version 0x20001) editions. 15 of the characters this
 project imported have clips (5–11 each). **Verified offline**.
+The selector, record and bank layout (66 selector records, 205 clip records, banks in `start.dat` members 64, 66, 68 and 70, and the
+clip format) is on [functions.md](functions.md#sprite-and-animation-chain-switch-v0-2026-11-24-and-25). Twenty-five of the
+46 characters studied have no selector entry at all, and no code path was found that plays a line for damage, death or victory
+(**From decomp**: the selector functions have one caller, opcode `0x87`; not every script was run).
 
 ## Class facts from the community (Disgaea 1 Complete)
 
@@ -289,7 +326,9 @@ the game files.
 ## Open questions
 
 - What Complete's extra 8 bytes per character row hold.
-- What decides Dark Flonne's colours (not `+0x49`, which is 0, and not `+0x48`).
+- What decides Dark Flonne's colours (not `+0x49`, which is 0, and not `+0x48`); how the game reaches her own cut-in (block 32).
+- Which screen, if any, reads the older `start.dat` member 73 faces.
+- The meaning of `+0x82`, `+0x84` and `+0x8C`.
 - The unknown fields above; what `HABIT`'s 22 values mean exactly; `RMAPS` (random maps).
 
 ## Sources

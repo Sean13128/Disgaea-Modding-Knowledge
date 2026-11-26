@@ -39,6 +39,54 @@ See [engines](../engines/README.md) for why.
 7. **Recruiting.** D5: a recruit quest or the Recruiter (classes). D7: Unknown.
 8. **Label what isn't faithful.** Keep a note of every adapted skill, evility and voice.
 
+## Checking an import against its source game, by measurement
+
+When an imported sprite, stat or voice "looks off", measure it against the source game before changing anything. This
+method came from the review rounds of the D4, D1 Complete, D2 and Disgaea RPG imports (November 2026). Everything below is
+**Verified offline** unless marked.
+
+1. **Decode the source with a reader of your own, not with the importer.** Agreement with the importer's own reading proves
+   nothing. Where possible grade each reading rule by what backs it: the game's code run offline gives the same result
+   (strongest); traced code plus a whole-dataset check; two independently written decoders agree; the shipped data is
+   merely consistent; a community claim or inference (weakest). Decoding a file does not prove *when* the game uses it:
+   grade which asset is chosen for which character separately from how the pixels decode.
+2. **Compare drawn pictures, not files or ids.** Render the source motion at each of its own key times and the built bank at
+   the same times, then compare the pixels. Report per motion the share of drawn pixels that differ, the feet-line offset and
+   the loop length. Classify each difference by cause: the same picture after a shift (foot line), a held still where the
+   source animates, blank where the source draws, a different picture, an id that exists only in the donor, a source motion
+   the bank does not carry. Show source, built and installed side by side at the same scale with a shared foot line.
+3. **Measure static art by size and proportion first.** A cut-in or face copied by a plain resize can silently change its
+   aspect ratio. One example: Disgaea D2's cut-in is a 128 × 544 page whose drawn cell is 125 × 544; the D5 slot is
+   336 × 1080 and a plain resize stretched it about 2.6 times across and 2 times down (aspect 0.230 became 0.311). D4,
+   D1 Complete and Disgaea RPG cut-ins already have D5's proportions (0.31), so a plain resize is a uniform scale for them
+   and only D2 needs care. The fix that loses and invents nothing is **one scale** to the slot's height, centred, with
+   transparent bands at the sides; scaling to cover would crop about a quarter of the picture.
+4. **Take every value the source row holds from the source row.** A builder that started from a donor row and filled in only
+   id, base stats and aptitudes shipped the donor's movement, jump, throw, counter, critical, elemental resistance, weapon
+   mastery and flying flag for every D2 class: 225 of 607 compared values differed across 12 packs. Compare field by field
+   against an independent offset table. Leave a field on the donor only with a recorded reason (the donor game rebalanced
+   it, no reader was found, no source byte exists).
+5. **Rank the faults by how many characters each affects** before fixing one. In one survey of 46 D1 Complete, 44 D4, 12 D2
+   and 170 Disgaea RPG characters, the largest groups were: source motions or clips the importer simply does not carry
+   (every RPG character; most D1 Complete and D4 characters), donor-only motions the source has no equivalent for,
+   shifted foot lines, one held still where the source animates, a stretched cut-in (12 of 12 D2 packs), and a sibling
+   draw order that is reversed in D5 against D4 (66% of D4 packs; **From decomp**, not proven by a run). Fixing the importer
+   cause is worth more than fixing a character. Mark each ranked cause *proven* only when every rule that decides it is.
+6. **Say what a pass cannot show.** A pack that equals the source in a file comparison may still draw differently in the
+   game (a bank whose shape differs freezes the Hire wheel; a strip narrower than its texture is a drawing the game was
+   never shown). Keep "equal to the source offline" separate from "looks right in the game".
+
+**Donor motions.** D5 asks for a motion id the importer may have no source for, and the game answers a missing id with an
+empty cell. So an import fills each such id from somewhere. Three choices exist: D5's own motion drawn on the source art (the
+default; honest only if labelled as not from the source); hold the source's standing pose under the id (invents nothing,
+skills that call it show a still pose, but it changes the bank's shape); or carry every source motion and keep a donor only for
+ids that the engine or a learned skill requests. A caster-motion survey with the kit's skill simulator counted donor ids used by
+a learned skill: D4 45 of 559 (7 of 44 packs), D1 Complete 165 of 2,589 (28 of 46), D2 0 of 102. That count does not include
+what the engine plays by itself (hit reactions, lift, throw, death, walking in eight directions), which a unit needs whatever it
+learned. **Unknown:** how many donor ids are reachable in play.
+
+**Motion names.** The ids that look shared between games are not: see [Motion ids and what they mean](../formats/motion-names.md).
+
 ## Lessons from the D5 imports
 - Long class descriptions (> 255 bytes) and stray `%` signs crash or freeze D5 menus.
 - Check voice **gender**: a male class given a female voice set speaks female.
@@ -66,6 +114,17 @@ See [engines](../engines/README.md) for why.
 - **Reuse before you copy.** D5 already has some D4 characters' skills (Valvatorez's three). A comparison port can use
   those, but D5's versions keep D5's damage, targeting and effects. Evilities with no D5 equivalent (Valvatorez's
   innate Bloody Battle, D4 ID 347) are better left out than replaced with an unrelated one.
+- **D1 Complete humanoids are D5 humanoids.** D1 Complete draws its HD humanoids with D5's animation module on D5's shared
+  motion set, so build them on D5's own resident motions with the D1 body's textures and palettes kept byte for byte,
+  instead of flattening the rig into held poses (which left standing pictures where a reaction or lift belonged, and a walk
+  1.55 times slower than the vanilla one). Bank shape then changes (4 to 6 texture pages against 2), which is the Hire-wheel
+  memory class: declare the change per pack and check the wheel in the game before installing
+  ([import gates](building-packs-from-your-own-game-copies.md#import-gates); **Verified offline**, with the game check
+  still **Unknown** for those packs).
+- **Disgaea D2's palette counts are big-endian.** Rewriting only the table bytes without the colour count crashes D5 on the
+  first attack ([anm](../formats/anm.md)).
+- **Tag the source game in generated class names** (for example "Gargoyle (D1C)") so two games' same-named classes do not
+  double in the recruit list. Unique characters are not tagged.
 - **Removing a port doesn't clean saves.** Restoring vanilla archives doesn't make a save that holds a ported unit safe;
   keep the mod installed for that save or go back to a save from before the port.
 

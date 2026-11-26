@@ -122,6 +122,21 @@ The fact behind each gate is on the game pages; the ones with design lessons her
   one more image header in the wheel's resident set.
 - **Render roots** (node `root + 1`) are repaired at the end of an atlas rebuild; a fresh rebuild of one monster-bodied
   character had 129 animations the game draws differently until it was.
+- **Palette counts must fit the game's buffer.** Fail any bank whose palette-info rows carry a colour count outside 1..256:
+  D5 copies that many colours into a fixed 256-colour buffer without a clamp, and D2's big-endian count overran it on every
+  attack ([anm](../formats/anm.md)). **Verified in game** for the crash and the fix, build B.
+- **Required motions.** A shipped main bank must hold the motion ids that every clean-game bank of its body kind holds. This
+  is a guard (a missing id falls back to an empty cell), not an explanation for any one crash.
+- **Source fields.** A gate that compares every carried field of each built pack with the source row, from an independent
+  offset table, and (for a unique) checks that every opaque colour of the default palette is in the source palette. It found
+  225 differences across 12 D2 packs built from a donor row.
+- **Cut-in fit.** A gate that measures each cut-in bank: one scale on both axes, nothing cropped, every pixel outside the
+  picture transparent, and rank *k* of a class holding rank *k*'s own strip. The position is searched, not assumed.
+- **Source motions** (rig-built packs only): every motion that has a twin in the source game must equal the source at every
+  key. A declared bank-shape change is *not* an approval: the owner's go-ahead and an in-game wheel check are still required
+  before install, because image objects grow the wheel's resident set.
+- **Class names carry the source game** for generated classes, so a Gargoyle from two games does not double in the recruit
+  list.
 - **Faces:** for D1 Complete the default is now the game's own HD faces, and a rebuild of the 59 in-scope packs changed
   only faces and the importer's accumulated bank differences.
 
@@ -145,8 +160,15 @@ SHA-256), and import such a folder.
   every user's dump matches a known build.
 - Some art code (an extractor for D4 and D2 bodies) was outside the kit repository, pending a provenance review; the
   importer asks for its folder through a setting.
-- A learned humanoid pose reference used for Disgaea RPG is not in the repository and is not rebuilt by anything; the
-  user must supply the upstream release file, and it is used only when its SHA-256 equals the pin.
+- A learned humanoid pose reference used for Disgaea RPG is not in the repository. **Corrected 2026-11-25:** it can now be
+  rebuilt. The upstream release zip carries the labelled frame sheet it was made from, and a tool in the development fork
+  reproduces the file byte for byte (the same SHA-256 and size as the pin): rows and labels come from the kit's own sheet parser;
+  one entry per non-empty cell in reading order (nine fully transparent hand-overlay cells are left out, leaving 101);
+  each entry holds the cell's canvas size, the top-left of its opaque pixels, that crop, its features and its position in
+  the row. The user still needs the release zip (or its sheet), and the file is still used only when its SHA-256 equals the
+  pin. The byte identity needs a recent numpy (2.x) and pickle protocol 4. One entry's `found` flag cannot be derived from the
+  sheet and is carried as a constant; nothing reads it (**Verified offline**: 4 of 4 packs that failed without the file then
+  built).
 - Four Disgaea RPG cut-ins and 34 look or monster-twin sheets are not in the standard unpack; packs that need them refuse
   by name until the user supplies them.
 

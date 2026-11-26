@@ -84,7 +84,7 @@ Nothing in this block has been checked by ear in the running game.
   directions are the same frames mirrored by the engine.
 - Textures are 8-bit indexed (256-colour palettes, ARGB) or 32-bit. The PC release converted the console's
   16-colour textures to 256 colours.
-- Palettes are picked by colour variant: generic class rank *k* is drawn with palette *k*. Ten palettes per sprite.
+- Palettes are picked by colour variant: generic class rank *k* is drawn with palette *k*. Ten palettes per sprite. Each palette's colour count (PaletteInfo row `+4`, an i32) must be 1–256: an attack copies that many colours into a 256-colour buffer with no clamp ([functions](functions.md#the-attack-palette-copy-has-no-bound)).
 - Named nodes: 1 body, 10 weapon slot, 11–17 / 111–116 attachment points (hands, effects). Named-node meanings are
   the Kit's guess.
 - Humanoid generic classes share one layout of motion cells; monsters each have their own (11–36 poses) but share 57
@@ -145,8 +145,9 @@ change to 21/27 can affect the Hire screen.
 
 ### Weapons on sprites
 
-Battle sprites carry **attachment nodes** for the weapon. The game draws the main weapon there (in idle poses the
-sub-weapon isn't drawn):
+Battle sprites carry **attachment nodes** for the weapon. The game draws the main weapon in the hand nodes (11–16). The sub weapon goes on the second group (111–116), but
+only for a unit with Double Bladed (evility 4503) (corrected 2026-11-25; the earlier note that the sub weapon isn't drawn in idle
+poses was this rule, see below):
 
 | Node (hand / across the body) | Weapon type | Base weapon sprite |
 |---|---|---|
@@ -168,6 +169,26 @@ sub-weapon isn't drawn):
   `0x14014DC00` places weapon category *c* (1–7) at slot `9 + c` or, for the second bank, `109 + c`. The second bank
   is chosen when the actor's flag `+0x24C` is 0 and this is equipment record 1, or the flag is set and it's record 0.
   Selecting a weapon disables the other slots in that bank; actor `+0x1E0` can suppress the attachment entirely.
+- **The sub weapon is drawn only for a unit with Double Bladed** (evility 4503, which dual-wields main and sub weapon)
+  (**From decomp**, build B, read in `0x14014E4C0` and `0x14014DC00`; added 2026-11-25). Main weapon (equipment record 0) binds to
+  the hand group (nodes 11–16) and sub weapon (record 1) to the second group (111–116) by weapon type, but the second
+  group is bound **only when the unit has that evility and the sub slot holds a weapon (item category 1–7)**. Every other
+  node, and all of group 111–116 otherwise, is disabled whatever the animation's keys say. The game's attack animations
+  key both groups in nearly every frame (a sword attack shows 111 and 11 from frame 16 on) because they are authored for a
+  dual wielder, so a unit with one weapon simply shows the hand group. A script command swaps the two groups (main to the
+  second hand, sub to the first; flag at actor `+0x24C`); whether a vanilla event uses it is not checked. An earlier
+  note here and in the Kit's grip page said the sub weapon "isn't drawn at all" in the idle, as seen in game on 2026-10-08:
+  that was this rule, not a missing node.
+- **Motion ids all clean banks carry** (**Verified offline**, scan of the unmodified game's banks, 2026-11; a corpus of what vanilla
+  relies on, not proof of what the engine requests). 58 ids are in every one of the 69 clean monster banks (among them 1021–1267,
+  1031, 1051, 1061, 1091, 1111, 1121, 1141, 1151–1261, 1501, 3071/3077 and 4001–4027), and 1511 is in 72 % of them, 1521 in 58 %.
+  Of 80 clean humanoid banks only 0, 6001 and 6007 sit in the unit's own bank; the rest come from the resident block. A
+  bank missing 1511 and 1521 did not explain a crash (see the palette copy above), and a missing id only draws the bank's first
+  (empty) animation. Move, lift, throw, defend, death and item motions are requested by engine code without a script event
+  (**From decomp**).
+- **Cut-in textures** of the game's own characters fill the whole 336 × 1080 texture (opaque area 0..335 × 0..1079 on every one
+  checked, **Verified offline**), so a slot expects a full-bleed strip; a narrower source picture should be scaled by one
+  factor and centred on transparency. How the game draws a strip narrower than its texture is **Unknown** (needs a look in game).
 - The game's own humanoids store only their idle and special poses (6xxx, 7xxx) per character; their other motions
   are shared by every humanoid in `anm_resident`, so those can't change per character.
 

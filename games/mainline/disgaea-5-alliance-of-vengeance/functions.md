@@ -40,7 +40,7 @@ language slots each), Database `0x141E54440`, Skit `0x1469CE6D0` (one slot).
 **Lookup order** for multi-language archives: the text-language archive, then JP, then the rest.
 
 **Start-up, build B** (read from original code in the D4 → D5 expansion research): `WinMain` (`0x140864970`) reserves
-one **512 MiB heap** (published at `0x147B59E30`) that the game's own allocator (`0x14086D030`) carves up. Before that, `WinMain` installs its crash filter `0x140864A80` (at `0x140864A07`), which captures a stack trace with `RtlCaptureStackBackTrace`; hooks without proper unwind data confuse it. Start-up
+one **512 MiB heap** (published at `0x147B59E30`) that the game's own allocator (`0x14086D030`) carves up. (An unclamped palette copy can overwrite that handle: [palette copy overrun](#the-attack-palette-copy-has-no-bound).) Before that, `WinMain` installs its crash filter `0x140864A80` (at `0x140864A07`), which captures a stack trace with `RtlCaptureStackBackTrace`; hooks without proper unwind data confuse it. Start-up
 `0x14013DDF0` then creates a named mutex (one running copy), initializes Steam (`RestartAppIfNecessary` with app ID
 `0xC4310` = 803600), and allocates the `0xA40`-byte input / configuration manager (pointer at `0x140BD7B30`), whose
 set-up reads `config.ini` and the window settings. The script manager is a separate `0x848`-byte object (pointer at
@@ -303,6 +303,14 @@ function names that aren't published here.
 | Line pick | `0x140226C00` | Random row of the voice table with matching group and situation flag; linear scan, ≤ 512 lines per set |
 | Line by ID | `0x1400ADF00` | Binary search: table must be sorted by ID |
 
+**Voice archive index (FAFULLFS).** The 48-byte index entries hold hash, name offset, size and data offset, and the
+time field at `+0x28`. The game's readers (`0x14086FAB0` mounts the archive and loads the entries raw; name lookup
+`0x14086EFD0` binary-searches the hash at `+0`; open `0x14086F6A0` uses `+0x10` and `+0x18`; seeks `0x1408732A0`,
+`0x140876310`, `0x140876960` use `+0x20`; `0x14086F330` uses `+0x18`) **never read `+0x28`** (**From decomp**). The
+`+0x28` reads in open and seek belong to the 64-byte-stride PS_FS_V1 branch. A tool may therefore write any time value
+there. The Kit once wrote the install clock, so the same mod set gave a different file hash on every install (the
+differing bytes were only those time fields: **Verified offline**); it now copies the newest vanilla entry's time.
+
 ## Maps and stages
 
 | Function | Address | What it does |
@@ -388,7 +396,7 @@ reads or hooks. They're declared for build **B** (`D5_BUILD_9460A6411699`) and u
 | Evility bank counts | `0x14015E0E0` | Reads `unit+0x2F24` / `+0x2F26` (signed 16-bit) |
 | Stat-route modifier | `0x1401F4D80` | Basic-attack stat route; the formula's selector isn't always final |
 | Skill-type query | `0x1401C1EE0` → `0x1401D78E0` | Passes the selector byte `0x6D` |
-| Class-rank lookup | `0x1400744D0` | `(owner + class_order − 1)`; the Skill Shop calls it without a null check (the source-3 crash) |
+| Class-rank lookup | `0x1400744D0` | A binary search of `JobRank.dat` (sorted at load by `0x1400C1820`, so file order doesn't matter); the key is `(owner + class_order − 1)`, or `owner + 5` for a unique. The Skill Shop calls it without a null check (the source-3 crash: [Skill Shop predicate](#the-skill-shop-eligibility-predicate-and-its-null-read)) |
 | Graphics ID for a class and palette (earlier listed here as a `char.dat` row lookup) | `0x14021F4A0` | See [Graphics ID](#graphics-id-which-face-a-unit-shows) |
 | Unlock helper | `0x140143720` | Reached after a rank unlock writes its flag |
 | Memory copy | `0x14010E680` | Used for whole-unit and whole-state copies |
@@ -500,6 +508,12 @@ The clean `char.dat` has no row whose body `N` exists without `N + 1` (loose, or
 A monster's normal attack is script event `12010000 + sprite ID`, which plays motion 207 (animations 2071 / 2077). In the clean game these animations sit in the **main** file
 `anm{N}`, not the companion `anm{N+1}`, for 78 IDs (54 keep them in the companion) (**Verified offline**; that the game
 plays them from the main file is inferred from that layout).
+
+The Kit's choreography simulator run on the clean script (**Verified offline**) gives the motion ids a normal monster
+attack puts on each side: the caster plays 207 (2071 / 2077), and the target's hurt cascade is 106, 114, 115, 116 and
+117. The effects-skipped and midway-skipped variants of the same event (`12110000 + N`, `12210000 + N`) put 200 and 100 on
+the caster. Move, lift, throw, defend, death and item motions are asked for by engine code with no script event, so the
+simulator cannot derive them (**From decomp**).
 
 ### Army size and Dismiss
 
@@ -722,7 +736,14 @@ Every 3D model the game builds (effect models, map objects) takes one block from
   Disgaea 4 attack) took 56 on its first cast, then 8, 6 and 12 on three later casts, then none for casts 8 to 20; Crane
   Dance 14 then 4 then none; ten End Turns with no cast added 2 once. A repeated cast does not grow the count; what grows
   is one set of records per distinct effect model used for the first time.
-- Whether a long soak ends in the crash with the on-demand fix in place is **Unknown** (the run was still going).
+- **Update 2026-11-21: the soak ran.** With the Kit's on-demand loader fixed to build each model once, one session cast
+  201 converted attacks (75 distinct) plus 3 stock casts and did not crash (**Verified in game**, modified executable
+  `6c5ca464…`, Kit effect runtime). The in-use count peaked at **423** and stayed flat from the 29th cast to the 201st.
+  The reason is the Kit's cache, which holds at most 400 models: 423 = 23 other records + 400 cached blocks, and loading
+  a new model past 400 evicts an old one and frees its block (1,664 loads, 1,284 releases, no load refused, none failed). A second
+  run peaked at the same 423 after about 50 first-time attacks. The first cast of Flying Press cost 28 records with the
+  fix (56 without) and a stock Hellfire Shot 15 (20 without). The terrain arena's in-use count stayed at 2 throughout.
+  An evicted model is loaded again on its next use; the delay that adds to a scene was **not measured**.
 
 ### Sub-class list seen in play and the current-sub-class panel
 
@@ -863,6 +884,118 @@ set; other cases are 0x3C, 0x46, 100, 0x78, 0xBE, 0xDC and 0x14A–0x172. A clas
 row's plain title. This is why a unit saved while wearing an outfit (a different class ID) came back with the row title
 (**Verified in game**, modified executable `b4dd297e…`; fixed by mapping the class argument through the outfit table).
 
+## Findings from 2026-11-20 to 2026-11-25 (build B)
+
+"Modified executable" means the D5 Mod Kit development fork's patched build, as above. Live tests ran under Wine on the
+Steam build with imported content installed; each row names its label.
+
+### The attack palette copy has no bound
+
+Every attack and special of a unit starts by copying the unit's current palette into a **fixed 256-colour buffer** at
+`0x1469AF859`. The copy routine is `0x1402F9550` (380 bytes). It has two branches (**From decomp**, with the disassembly
+read directly):
+
+- If the actor has unit colour data (pointer at actor `+0x240`, flag at `+0x39C4`, tested by `0x140148490`) it copies
+  exactly 256 colours from that table. Humanoid units probably take this branch (a reading).
+- Otherwise it finds the loaded animation record of the actor's bank (`actor +0x2A6`, `anm_find_loaded_record`), reads the
+  colour count from the record's PaletteInfo row (an **i32 at row +4**, indexed by the actor's palette at `actor +0x2AA`)
+  and copies that many dwords from the record's colour block into the buffer, **with no clamp**.
+
+Callers are the basic-attack starter `0x140544580` (call at `0x140545C42`) and the skill-action starter `0x1405434D0`
+only. **Move never calls it**, so a unit with a bad count can walk but crashes on its first attack or special.
+
+A count above 256 is therefore a memory smash. Seen live (**Verified in game**, modified executable `f789ddb7…`, an
+imported Disgaea D2 monster class whose PaletteInfo rows held D2's big-endian count, bytes `00 00 01 00`, which D5 reads
+as `0x01000000` = 16,777,216 colours): the loop wrote dword after dword upward from the buffer, reached the heap handle at
+`0x147B59E30` after 4,630,901 dwords and kept going over everything between (the animation bank table `0x1469B05F8`, the
+effect arena header `0x146A07110`). The "pixel-like garbage" that replaced the handle was heap bytes following the palette
+data. A software write-watch (below, [modifiable](modifiable.md#finding-who-writes-an-address-under-wine-or-crossover))
+named the writing instruction `0x1402F9684` (`mov [r8 + rax*4 + 0x829], ecx`) at the same address in two separate boots,
+with the loop count register at `0x1000000`. Correcting the counts to 1–256 and rebuilding the bank: three Attacks, a hit
+taken and two specials all ran with the handle unchanged and no write seen to it, while the unfixed pack crashed three
+times out of three on the same runtime.
+
+In the unmodified game, **2,006 palette banks** hold counts of 16 to 256 only (6,919 rows are 256) (**Verified offline**).
+Ten of 307 installed packs with banks (all imported Disgaea D2 monster classes) had the bad count; only one class was fought live, so the other nine are **Unknown**. The rule for modders is in [modifiable](modifiable.md#hard-limits-and-crash-causes).
+
+### The Skill Shop eligibility predicate and its null read
+
+`0x1407CD9C0` decides whether a unit may learn a `Skill.dat` row. It runs over **every row** when the Skill Shop builds a
+unit's learn list (`0x1407CDE50`), so the player does not have to select the bad row; the unit-list builders `0x1407D8830`
+and `0x1407DAFB0` run it until one row is accepted. Steps, with the record fields in bytes (**From decomp**):
+
+| Step | Test | Result |
+|---|---|---|
+| 1 | `mana_cost` (`+0x4C`) below 1 | not offered |
+| 2 | `kind` (`+0x30`) is 1 and `unit +0x3034 & 7` is 0 | not offered |
+| 3 | `version_group` (`+0x5C`) above 150 | not offered |
+| 4 | `source` (`+0x40`) is 4 and `kind` is 1 | not offered |
+| 5 | `source` is 3, `kind` 1 | `0x1400744D0(owner + 5)`, then reads **`result + 4` with no NULL check: crash at `0x1407CDA94`** |
+| 6 | `source` is 3, `kind` 0 | `0x1400744D0(owner + class_order − 1)`, same unchecked read at `0x1407CDAE1` |
+
+So a **unique** (`kind` 1) row sold by class mastery (`source` 3) needs a `JobRank.dat` row at `owner + 5`; when there is
+none the lookup returns NULL and the game reads address 4. The trigger needs a unit with one of bits 0–2 of
+`unit +0x3034` set, which the game sets when it grants extra unique-evility slots; the unit's class does not matter. A
+read of a backup of one playtest save found two such units in 60.
+
+Reproduced under emulation of the game's own predicate over all 1,344 rows, 8 flag values and 7 classes (75,264 calls)
+with the unmodified executable and a modified one (**Verified offline**): the unmodified game's own tables give no fault; a
+mod's table with one row of this shape (a character evility copied from a class evility and left at `source` 3,
+`mana_cost` 10000) faults at `0x1407CDA94` reading address 4. The same fault was seen as a Windows error dialog in a
+playtest of the fork; no controlled live repro was made. The fix is in the data: character evilities are `source` 4 with
+`mana_cost` 0 (the Kit now rewrites such a row at install). Whether the older Skill Trainer fast-fail at `0x140116224`
+(see [modifiable](modifiable.md#hard-limits-and-crash-causes)) is the same defect is **Unknown**. For owners whose class has
+no mastery slot the mapper answers −1 and the predicate compares a neighbouring field; not examined (**Unknown**).
+
+### Counter-attack chains in the battle queue
+
+The battle manager keeps an action queue: count at `+0x950`, cursor at `+0x954`, entries are action contexts whose header
+carries the actor, the skill, the **counter depth** (`+0x27644`), an assist flag (`+0x27645`) and a repeat flag (`+0x276AD`)
+(**Verified in game**, read about every 0.3 s while scenes played; modified executable `6c5ca464…`).
+
+What the queue showed for a damaging special: entry 0 is the cast (depth 0) with three distinct targets, each losing its
+amount once. Then each target that can reach the caster queues a **counter-attack** (depth 1, often 0 damage). The caster can
+then **counter the counter** with a normal attack (depth 2) that shows up as a **second HP step on one target**. The second
+amount is an independent roll, not the first hit again. This explained all 9 casts in 5 of 6 attacks that looked like "one
+target hit twice" in an earlier sweep (the sixth, Death Scratcher, drew no counter in two casts, so its case is a reading). A
+stock skill (Pringer Beam) drew counters from enemies 3 casts out of 3 and never a counter back, so the chain is the
+game's, not a converted skill's. It needs targets within reach of the caster: a single-target cast two or three panels away
+from melee enemies seldom triggers it (a reading). In battles with several of your units, an ally's Support Attack
+(evility 1110, assist list `0x1404D23A0`) is a second possible reaction (**From decomp**; the queue's assist flag records
+it). Counter rules per class (counter stat, reach) are not mapped (**Unknown**).
+
+Why a hit cannot land twice on one unit inside the cast itself (**From decomp**): the target list is built by the range
+collector `0x1402DA750` and de-duplicated by `0x1402DB820` (the unit-at-cell query), and the per-target action routine
+`0x140162D40` applies one HP command per entry.
+
+### Area shapes and the target selector seen in play (Verified in game)
+
+From a sweep of 44 area attacks (50 casts; modified executable `6c5ca464…` with imported Disgaea 4 and DD2 specials):
+every enemy inside the attack's area lost HP from the skill once, **no unit outside the area lost HP**, and each scene returned
+to the command menu (2.9 to 13.8 s). Specifics:
+
+- The selector takes **any unit in the area, including your own**: a cast aimed at one enemy hit the caster's own Dragon
+  standing inside the zone.
+- A line-shaped special (its `AttackMap.dat` shape is one hit panel **three ahead in a line** and one "caster ends here"
+  panel directly **behind** the caster) cannot be cast with an enemy one or two panels ahead: the menu says "Attack zone
+  obstructed." The panel behind must be free; the caster moves onto it when the special runs. A three-panel line shape
+  (panels three, four and five ahead) hit three targets once each. Both were compared against the source game's rows
+  field by field (**Verified offline**) before the live casts.
+- **Holding the skip key (Left Alt) from the Execute command** plays a special in about 3.0–3.2 s instead of 3.8–7.6 s,
+  with the same damage and no effect-model loads.
+
+### Developer-menu text in the executable
+
+A block of **143 Shift-JIS developer labels** sits in `.rdata` at `0x1408FAE08`–`0x1408FBA0C`, between ordinary string literals. They
+name a character and weapon sequence check, skill, effect and dummy editors, script-authoring and script-debug entries, DAT
+and map reload, battle cheats (invincibility, forced critical rates, unlimited actions, guaranteed chests), party and item
+grants, a language switch and tabs, plus a few ASCII tags (**From decomp**, static scan of the clean executable).
+No RIP-relative displacement, absolute pointer or image-relative offset reaches them (three scans of the whole file;
+the few hits landed on unrelated labels). Reading, moderate confidence: the menu code was compiled out of the PC build and the
+text is leftover. Whether anything reaches it, or any flag brings it back, is **Unknown**. The ini section `[DbgSettings]`
+(`0x1403DF0F0`, `0x1403E00F0`) is crash-report and priority settings, not this menu. One debug behaviour does survive in
+game code: a geo-cell overlay toggle at `0x14023DEB0` (action 55).
+
 ## Unit record (in the game state)
 
 The game state is a `0x89B8C8`-byte block that a save stores whole. Units are `0x4750` bytes each.
@@ -888,6 +1021,35 @@ The game state is a `0x89B8C8`-byte block that a save stores whole. Units are `0
 | `+0x359C` | 8 × u16 | Mastery completion bonuses |
 | `+0x35AC` | u16 | Selected sub-class |
 | `+0x35BC` | u16 | Revenge gauge |
+
+### Unit record: more offsets (compiled from the Kit's save reader and decomp reading)
+
+Offsets are inside the `0x4750`-byte unit. Rows marked **upstream** are read or written by code in the public
+[D5 Mod Kit](https://github.com/eraser4521/D5ModKit) (its save reader `d5lib/savegame.py` and its patch and test tools;
+**Verified offline**: they round-trip on copies of real saves). Rows marked **fork** come from code or docs in the D5 Mod Kit
+development fork only. Nothing here was re-tested in game for this page; where a row has no other label, it is the kit's own reading.
+
+| Offset | Size | Field | Backed by |
+|---|---|---|---|
+| `+0x2CC0` | s16 | Skill count; the skill list is at `+0xCC0`, 16-byte entries (experience u32, skill id u32, then level and flag bytes) | upstream (`tools/battle_nav.py`) |
+| `+0x2CC8` / `+0x2CD0` | i64 | Current HP / SP (maximum HP `+0x2CD8`, maximum SP `+0x2CE0`; both derived) | upstream (`tools/battle_nav.py`, `d5auto.c`) |
+| `+0x2D18` / `+0x2D20` | i64 | Base HP / base SP, the first two of the base stats HP SP ATK DEF INT RES HIT SPD rolled at creation (the rest follow; the order of the other six is a reading) | upstream (`tools/battle_nav.py`) |
+| `+0x2DA0` | 8 × u8 | Growth rate per stat | fork |
+| `+0x2DA8` | 10 × 8 B | Weapon mastery: fist, sword, spear, bow, gun, axe, staff, monster physical, monster magic, armor. Per entry: experience u32 (300 × (L (L + 1) / 2 + 4L), L at most 101), level u8, level with bonuses u8, aptitude u8 (the rank, copied from `char.dat` `mastery_*` when the unit is made and never changed), bonus u8 | upstream (`savegame.py`) |
+| `+0x2DF8` | u32 | Mana (checked against the interface on 4 units) | fork |
+| `+0x2DFC` | u16 | Level (1–9999) | upstream (`savegame.py`) |
+| `+0x2E10` | u16 | Previous class id, written by reincarnation (inferred) | fork (decomp) |
+| `+0x2E12`–`+0x2E15` | 4 × i8 | Base element resistances (fire, wind, ice, star). Weapon resistances come from the class row | fork |
+| `+0x2E25` | u8 | Kind: 1 human male, 2 human female, 11 monster male, 12 monster female | fork |
+| `+0x2E2C` | u8 | Colour choice | upstream (`d5looks.inc.c`) |
+| `+0x2E32` | u8 | Guest or temporary flag (tested by the extra-slot patch) | upstream (`unlockpatch.py`) |
+| `+0x3034` | u32 | Extra unique-evility slot bits (bits 0–3). Bits 0–2 also gate which unique evilities the Skill Shop offers ([predicate](#the-skill-shop-eligibility-predicate-and-its-null-read)) | upstream (`unlockpatch.py`); the Skill Shop use is **From decomp** |
+| `+0x3068` / `+0x3078` | 8 × u16 each | Potency (scales equipment stats, derived) and aptitude % (`char.dat` value plus reincarnation count) | fork |
+| `+0x35BE` | u8 | Element chosen for the starting spell; `0xFF` at creation | upstream (`weaponlevels.py`) |
+| `+0x35C4` | 3 × `0x480` | Three custom colour sets (`0x400` palette, a flag, shade / saturation / brightness) | upstream (`d5looks.inc.c`) |
+| `+0x4348` | i32 | Battle stat-record index (−1 outside battle). Ailments, Magichange and partner state live in that record, not in the save | fork |
+
+Other unit fields are not documented here.
 
 **The active evility list** (build **B**, emulated original code). Builder `0x140218C90` fills all 64 slots with −1,
 sets the length to 0, then appends the unit's innate and learned evilities, five equipment sources and partner
@@ -933,6 +1095,8 @@ Function-level matching shows D5 shares a lot of engine code with D4, D6 and D7,
 - Which functions decide turn order, the command menu, and Move/Jump totals? (Not yet mapped for evilities.)
 - Are the two build-B hashes (SHA-1 `9460a641…`, SHA-256 `49a7530b…`) the same file?
 - A full name map of the battle, AI and menu systems.
+- Does anything reach the developer-menu text in the executable, and what do the per-class counter rules look like?
+- Does the palette-copy overrun also hit the other nine imported Disgaea D2 monster classes in play?
 
 ## Sources
 
@@ -940,4 +1104,5 @@ Function-level matching shows D5 shares a lot of engine code with D4, D6 and D7,
 - This project's D4 → D5 expansion research (2026-10, `Research/d4-expansion-20261018/`: `rules/active-list`, `mvp-mastery-consumers`, `mvp-mastery-identity`), which runs original build-B code in an emulator ([method](../../../guides/decompile-setup.md#checking-a-finding-by-running-the-original-code)).
 - D5 Mod Kit development fork (Sean13128): `docs/EVILITIES.md`, `docs/MASTERY.md`.
 - [disgaea5autoplay](https://github.com/Grid487/disgaea5autoplay) by Grid487: the SHA-256 of the Steam executable.
+- 2026-11-20 to 2026-11-25 sections: this wiki's live tests (modified executables `6c5ca464…` and `f789ddb7…`, Wine), offline emulation of the game's own code, a static string scan of the clean executable, and the D5 Mod Kit development fork's `docs/ANM.md`, `docs/IMPORT_GATES.md`, `docs/VOICES.md` and `docs/WEAPON_GRIPS.md`.
 - November 2026 sections: this project's research, published in the D5 Mod Kit development fork's `docs/ANM.md`, `docs/EVILITIES.md`, `docs/IMPORT_GATES.md`, `docs/CHARACTER_BANK.md`, `docs/GAME_TRUTH.md`, `docs/IMPORT_YIELD.md` and `docs/SOURCE_VOICES.md`. The resident-placeholder design is Cryswar's (Overlord).
