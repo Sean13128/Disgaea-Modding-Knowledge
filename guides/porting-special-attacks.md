@@ -57,7 +57,7 @@ would be a good check.
 - **Don't whitelist commands.** A converter that kept only commands it knew lost whole visual groups that D5 plays
   natively: attached effects (`3c20/3c22`), effect moves, rotation, colour, speed and fade steps, blend mode,
   backdrop gradients and their end (`2840 n` → D5 `2835 n`), sprite turns and offsets, following (`6c00/6c04/6c08`),
-  draw depth (`6492`), sound effects and particles. Count and list every command you don't carry.
+  draw depth (`6492`), gravity (`6610`), sound effects and particles. Count and list every command you don't carry.
 - **Effect slots as actors.** D4 and D2 address effect slot *i* as actor **700 + i**; D5 uses **7000 + i**
   (and 10700 + i → 17000 + i). Passing 700 + i through puts the effect at the scene origin
   (**Verified in game**).
@@ -87,7 +87,10 @@ would be a good check.
   as stored. Storing node positions in vertex units puts every part ten times too far out (**Verified in game**).
 - **Helpers fall.** A scene-created helper actor that is lifted into the air is pulled back down by D5's gravity.
   Effects attached to it come down with it: D2's Gigantic storm cloud ended at unit height (**Verified in game**).
-  The fix is still being tested.
+  D5 gives every new object a gravity of 0.163 per frame²; command `6610 actor, v` sets it (v/100, 0 = float). D4 and
+  D2 have the same command with the same meaning, and their scripts already float such helpers with `6610 a, 0`.
+  Carrying `6610` keeps the cloud in the sky (**Verified in game**); it changed positions in 73 of 77 D4 and 26 of 32
+  D2 attacks (**Verified offline**).
 - **Draw depth.** `6492` sets a per-unit sort bias; without it, a large copy of the caster draws in front of everything
   (**From decomp**).
 
