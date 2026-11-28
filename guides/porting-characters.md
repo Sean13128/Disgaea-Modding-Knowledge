@@ -26,7 +26,7 @@ See [engines](../engines/README.md) for why.
    needs **three**), team-attack rates.
 3. **Look.** D5: sprite (`anmN`), standing picture, portrait/cut-in (`anm(10000+N)`), face, list icon; palettes per
    rank. D7: model, animation set, textures and their `model`/`modelinfo`/`modelsequence`/`texture` rows.
-4. **Skills.** Easiest: copy a target skill with a similar animation and give it the source game's numbers. Real
+4. **Skills.** For the source game's own scenes see [Bringing special attacks into Disgaea 5](porting-special-attacks.md). Easiest: copy a target skill with a similar animation and give it the source game's numbers. Real
    source animations need their scripts translated (D4 → D5 differs in 12 commands) and every mechanic they use
    (Lift Catch's carry) to exist in the target.
 5. **Evilities.** In **D5** behavior is code: map each source evility to the closest D5 one (exact, adapted,
